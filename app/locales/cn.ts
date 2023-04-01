@@ -12,7 +12,7 @@ const cn = {
     SubTitle: (count: number) => `与 ChatGPT 的 ${count} 条对话`,
     Actions: {
       ChatList: "查看消息列表",
-      CompressedHistory: "查看压缩后的历史 Prompt",
+      CompressedHistory: "查看压缩后的历史",
       Export: "导出聊天记录",
       Copy: "复制",
       Stop: "停止",
@@ -35,7 +35,7 @@ const cn = {
     Download: "下载文件",
   },
   Memory: {
-    Title: "上下文记忆 Prompt",
+    Title: "上下文记忆",
     EmptyContent: "尚未记忆",
     Copy: "全部复制",
   },

@@ -561,7 +561,7 @@ function exportMessages(messages: Message[], topic: string) {
 
 function showMemoryPrompt(session: ChatSession) {
   showModal({
-    title: `${Locale.Memory.Title} (${session.lastSummarizeIndex} of ${session.messages.length})`,
+    title: `${Locale.Memory.Title} (${session.lastSummarizeIndex} / ${session.messages.length})`,
     children: (
       <div className="markdown-body">
         <pre className={styles["export-content"]}>
