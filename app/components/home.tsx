@@ -665,7 +665,7 @@ export function Home() {
               <IconButton
                 icon={<SettingsIcon />}
                 onClick={() => {
-                  setOpenSettings(true);
+                  setOpenSettings(!openSettings);
                   setShowSideBar(false);
                 }}
               />
