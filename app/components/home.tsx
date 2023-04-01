@@ -22,7 +22,7 @@ import CloseIcon from "../icons/close.svg";
 import CopyIcon from "../icons/copy.svg";
 import DownloadIcon from "../icons/download.svg";
 
-import { Message, SubmitKey, useChatStore, ChatSession } from "../store";
+import { Message, SubmitKey, useChatStore, ChatSession, useAccessStore, AccessControlStore } from "../store";
 import { showModal } from "./ui-lib";
 import {
   copyToClipboard,
@@ -581,6 +581,23 @@ const useHasHydrated = () => {
   return hasHydrated;
 };
 
+const useCheckHash = (accessStore: AccessControlStore) => {
+  useEffect(() => {
+    try {
+      const hash = window.location.hash;
+      if (hash.startsWith('#c')) {
+        const code = hash.substring(2);
+        accessStore.updateCode(code);
+        setTimeout(() => {
+          window.location.hash = '';
+          window.history.replaceState({}, '', window.location.href.slice(0, -1));
+        }, 1);
+      }
+    } catch {
+    }
+  }, []);
+}
+
 export function Home() {
   const [createNewSession, currentIndex, removeSession] = useChatStore(
     (state) => [
@@ -595,8 +612,10 @@ export function Home() {
   // setting
   const [openSettings, setOpenSettings] = useState(false);
   const config = useChatStore((state) => state.config);
+  const accessStore = useAccessStore();
 
   useSwitchTheme();
+  useCheckHash(accessStore);
 
   if (loading) {
     return <Loading />;
