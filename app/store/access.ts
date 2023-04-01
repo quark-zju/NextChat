@@ -18,7 +18,7 @@ export const useAccessStore = create<AccessControlStore>()(
       token: "",
       accessCode: "",
       enabledAccessControl() {
-        return queryMeta("access") === "enabled";
+        return true;
       },
       updateCode(code: string) {
         set((state) => ({ accessCode: code }));
