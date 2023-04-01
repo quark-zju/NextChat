@@ -7,7 +7,6 @@ import { IconButton } from "./button";
 import styles from "./home.module.scss";
 
 import SettingsIcon from "../icons/settings.svg";
-import GithubIcon from "../icons/github.svg";
 import ChatGptIcon from "../icons/chatgpt.svg";
 import SendWhiteIcon from "../icons/send-white.svg";
 import BrainIcon from "../icons/brain.svg";
@@ -22,18 +21,16 @@ import CopyIcon from "../icons/copy.svg";
 import DownloadIcon from "../icons/download.svg";
 
 import { Message, SubmitKey, useChatStore, ChatSession } from "../store";
-import { showModal, showToast } from "./ui-lib";
+import { showModal } from "./ui-lib";
 import {
   copyToClipboard,
   downloadAs,
-  isIOS,
   isMobileScreen,
   selectOrCopy,
 } from "../utils";
 import Locale from "../locales";
 
 import dynamic from "next/dynamic";
-import { REPO_URL } from "../constant";
 import { ControllerPool } from "../requests";
 import { Prompt, usePromptStore } from "../store/prompt";
 
@@ -666,11 +663,6 @@ export function Home() {
                   setShowSideBar(false);
                 }}
               />
-            </div>
-            <div className={styles["sidebar-action"]}>
-              <a href={REPO_URL} target="_blank">
-                <IconButton icon={<GithubIcon />} />
-              </a>
             </div>
           </div>
           <div>
