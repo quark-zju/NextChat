@@ -52,7 +52,7 @@ export interface ChatConfig {
 
 export type ModelConfig = ChatConfig["modelConfig"];
 
-const ENABLE_GPT4 = true;
+const ENABLE_GPT4 = false;
 
 export const ALL_MODELS = [
   {
@@ -73,10 +73,6 @@ export const ALL_MODELS = [
   },
   {
     name: "gpt-3.5-turbo",
-    available: true,
-  },
-  {
-    name: "gpt-3.5-turbo-0301",
     available: true,
   },
 ];
