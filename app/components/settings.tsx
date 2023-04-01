@@ -81,18 +81,7 @@ export function Settings(props: { closeSettings: () => void }) {
       state.clearSessions,
     ]);
 
-  const updateStore = useUpdateStore();
-  const [checkingUpdate, setCheckingUpdate] = useState(false);
   const currentId = getCurrentVersion();
-  const remoteId = updateStore.remoteId;
-  const hasNewVersion = currentId !== remoteId;
-
-  function checkUpdate(force = false) {
-    setCheckingUpdate(true);
-    updateStore.getLatestCommitId(force).then(() => {
-      setCheckingUpdate(false);
-    });
-  }
 
   const [usage, setUsage] = useState<{
     used?: number;
@@ -112,7 +101,6 @@ export function Settings(props: { closeSettings: () => void }) {
   }
 
   useEffect(() => {
-    checkUpdate();
     checkUsage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -197,31 +185,6 @@ export function Settings(props: { closeSettings: () => void }) {
                 <Avatar role="user" />
               </div>
             </Popover>
-          </SettingItem>
-
-          <SettingItem
-            title={Locale.Settings.Update.Version(currentId)}
-            subTitle={
-              checkingUpdate
-                ? Locale.Settings.Update.IsChecking
-                : hasNewVersion
-                ? Locale.Settings.Update.FoundUpdate(remoteId ?? "ERROR")
-                : Locale.Settings.Update.IsLatest
-            }
-          >
-            {checkingUpdate ? (
-              <div />
-            ) : hasNewVersion ? (
-              <Link href={UPDATE_URL} target="_blank" className="link">
-                {Locale.Settings.Update.GoToUpdate}
-              </Link>
-            ) : (
-              <IconButton
-                icon={<ResetIcon></ResetIcon>}
-                text={Locale.Settings.Update.CheckUpdate}
-                onClick={() => checkUpdate(true)}
-              />
-            )}
           </SettingItem>
 
           <SettingItem title={Locale.Settings.SendKey}>
