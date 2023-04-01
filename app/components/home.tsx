@@ -302,18 +302,6 @@ export function Chat(props: {
             },
           ]
         : [],
-    )
-    .concat(
-      userInput.length > 0
-        ? [
-            {
-              role: "user",
-              content: userInput,
-              date: new Date().toLocaleString(),
-              preview: true,
-            },
-          ]
-        : [],
     );
 
   // auto scroll
