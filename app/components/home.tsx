@@ -469,7 +469,7 @@ export function Chat(props: {
           <TextareaAutosize
             ref={inputRef}
             className={styles["chat-input"]}
-            placeholder={Locale.Chat.Input(submitKey)}
+            placeholder={Locale.Chat.Input(submitKey, isMobileScreen())}
             maxRows={4}
             onInput={(e) => onInput(e.currentTarget.value)}
             value={userInput}
