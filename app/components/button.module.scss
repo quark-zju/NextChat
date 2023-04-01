@@ -11,6 +11,13 @@
   transition: all 0.3s ease;
   overflow: hidden;
   user-select: none;
+  border: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;
+  }
 }
 
 .border {
