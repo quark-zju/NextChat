@@ -38,12 +38,14 @@ export function getUsageRemaining(): number {
   console.log('[Usage] remaining:', usage);
   if (usage > 0) {
     usage -= 1;
-    if (usage % 5 === 0) {
-      saveUsageLimit(usage);
-    }
+    saveUsageLimit(usage);
   } else {
     // Double check.
     usage = loadUsageLimit();
   }
   return usage;
 }
+
+export const config = {
+  runtime: "nodejs",
+};
