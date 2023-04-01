@@ -8,14 +8,13 @@ export const config = {
 
 export function middleware(req: NextRequest) {
   const accessCode = req.headers.get("access-code");
-  const token = req.headers.get("token");
   const hashedCode = md5.hash(accessCode ?? "").trim();
 
   console.log("[Auth] allowed hashed codes: ", [...ACCESS_CODES]);
   console.log("[Auth] got access code:", accessCode);
   console.log("[Auth] hashed access code:", hashedCode);
 
-  if (ACCESS_CODES.size > 0 && !ACCESS_CODES.has(hashedCode) && !token) {
+  if (ACCESS_CODES.size > 0 && !ACCESS_CODES.has(hashedCode)) {
     return NextResponse.json(
       {
         error: true,
@@ -29,24 +28,19 @@ export function middleware(req: NextRequest) {
   }
 
   // inject api key
-  if (!token) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (apiKey) {
-      console.log("[Auth] set system token");
-      req.headers.set("token", apiKey);
-    } else {
-      return NextResponse.json(
-        {
-          error: true,
-          msg: "Empty Api Key",
-        },
-        {
-          status: 401,
-        },
-      );
-    }
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (apiKey) {
+    req.headers.set("token", apiKey);
   } else {
-    console.log("[Auth] set user token");
+    return NextResponse.json(
+      {
+        error: true,
+        msg: "Empty Api Key",
+      },
+      {
+        status: 401,
+      },
+    );
   }
 
   return NextResponse.next({
