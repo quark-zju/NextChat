@@ -313,6 +313,7 @@ export function Settings(props: { closeSettings: () => void }) {
               icon={<EditIcon />}
               text={Locale.Settings.Prompt.Edit}
               onClick={() => showToast(Locale.WIP)}
+              disabled={true}
             />
           </SettingItem>
         </List>
