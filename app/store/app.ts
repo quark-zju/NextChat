@@ -370,9 +370,9 @@ export const useChatStore = create<ChatStore>()(
         updater: (message?: Message) => void,
       ) {
         const sessions = get().sessions;
-        const session = sessions.at(sessionIndex);
+        const session = sessions[sessionIndex];
         const messages = session?.messages;
-        updater(messages?.at(messageIndex));
+        updater(messages[messageIndex]);
         set(() => ({ sessions }));
       },
 

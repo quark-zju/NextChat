@@ -177,8 +177,9 @@ export async function requestWithPrompt(messages: Message[], prompt: string) {
   ]);
 
   const res = await requestChat(messages);
+  const firstChoice = (res?.choices ?? [])[0];
 
-  return res?.choices?.at(0)?.message?.content ?? "";
+  return firstChoice?.message?.content ?? "";
 }
 
 // To store message streaming controller
