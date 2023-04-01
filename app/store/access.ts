@@ -6,7 +6,6 @@ export interface AccessControlStore {
   accessCode: string;
   token: string;
 
-  updateToken: (_: string) => void;
   updateCode: (_: string) => void;
   enabledAccessControl: () => boolean;
 }
@@ -23,9 +22,6 @@ export const useAccessStore = create<AccessControlStore>()(
       },
       updateCode(code: string) {
         set((state) => ({ accessCode: code }));
-      },
-      updateToken(token: string) {
-        set((state) => ({ token }));
       },
     }),
     {
