@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
+import TextareaAutosize from 'react-textarea-autosize';
+
 import { IconButton } from "./button";
 import styles from "./home.module.scss";
 
@@ -463,11 +465,11 @@ export function Chat(props: {
       <div className={styles["chat-input-panel"]}>
         <PromptHints prompts={promptHints} onPromptSelect={onPromptSelect} />
         <div className={styles["chat-input-panel-inner"]}>
-          <textarea
+          <TextareaAutosize
             ref={inputRef}
             className={styles["chat-input"]}
             placeholder={Locale.Chat.Input(submitKey)}
-            rows={4}
+            maxRows={4}
             onInput={(e) => onInput(e.currentTarget.value)}
             value={userInput}
             onKeyDown={(e) => onInputKeyDown(e as any)}
