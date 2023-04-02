@@ -68,7 +68,7 @@ export async function requestChat(messages: Message[]) {
   }
 }
 
-export async function requestUsage() {
+export async function requestUsage(): Promise<{ granted: number, used: number } | undefined> {
   const res = await requestOpenaiClient(
     "dashboard/billing/credit_grants?_vercel_no_cache=1"
   )(null, "GET");
@@ -79,9 +79,33 @@ export async function requestUsage() {
       total_granted: number;
       total_used: number;
     };
-    return response;
+    if (response.total_available > 0) {
+      return {
+        used: response.total_used,
+        granted: response.total_granted,
+      };
+    }
   } catch (error) {
     console.error("[Request usage] ", error, res.body);
+  }
+
+  // Free credit has been used up or expired. Query non-free usage.
+  const now = new Date();
+  const startDate = `${now.getUTCFullYear()}-${now.getUTCMonth() + 1}-1`;
+  const endDate = `${now.getUTCFullYear()}-${now.getUTCMonth() + 2}-1`;
+  const nonFreeRes = await requestOpenaiClient(`dashboard/billing/usage?end_date=${endDate}&start_date=${startDate}&_vercel_no_cache=1`)(null, "GET");
+  try {
+    const response = (await nonFreeRes.json()) as {
+      daily_costs: any[]; // not yet interesting
+      total_usage: number;
+    };
+    console.log(response);
+    return {
+      used: Math.round(response.total_usage) / 1000, // cents -> dollars
+      granted: 0,
+    };
+  } catch (error) {
+    console.error("[Request non-free usage] ", error, res.body);
   }
 }
 

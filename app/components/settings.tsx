@@ -70,8 +70,8 @@ export function Settings(props: { closeSettings: () => void }) {
     requestUsage()
       .then((res) =>
         setUsage({
-          granted: res?.total_granted,
-          used: res?.total_used,
+          granted: res?.granted,
+          used: res?.used,
         }),
       )
       .finally(() => {
