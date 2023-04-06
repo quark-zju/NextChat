@@ -666,7 +666,7 @@ export function Chat(props: {
           <textarea
             ref={inputRef}
             className={styles["chat-input"]}
-            placeholder={Locale.Chat.Input(submitKey)}
+            placeholder={Locale.Chat.Input(submitKey, isMobileScreen())}
             rows={2}
             onInput={(e) => onInput(e.currentTarget.value)}
             value={userInput}
