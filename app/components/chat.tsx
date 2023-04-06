@@ -174,6 +174,7 @@ function PromptToast(props: {
             ]}
           >
             <>
+              {/*
               <div className={chatStyle["context-prompt"]}>
                 {context.map((c, i) => (
                   <div className={chatStyle["context-prompt-row"]} key={i}>
@@ -230,10 +231,11 @@ function PromptToast(props: {
                   />
                 </div>
               </div>
+              */}
               <div className={chatStyle["memory-prompt"]}>
                 <div className={chatStyle["memory-prompt-title"]}>
                   <span>
-                    {Locale.Memory.Title} ({session.lastSummarizeIndex} of{" "}
+                    {Locale.Memory.Title} ({session.lastSummarizeIndex} / {" "}
                     {session.messages.length})
                   </span>
 
@@ -555,7 +557,7 @@ export function Chat(props: {
         </div>
 
         <PromptToast
-          showToast={!hitBottom}
+          showToast={!hitBottom && false}
           showModal={showPromptModal}
           setShowModal={setShowPromptModal}
         />

@@ -158,7 +158,7 @@ const cn = {
   },
   Context: {
     Toast: (x: any) => `已设置 ${x} 条前置上下文`,
-    Edit: "前置上下文和历史记忆",
+    Edit: "历史记忆",
     Add: "新增一条",
   },
 };
