@@ -396,6 +396,8 @@
 .chat-input-panel-inner {
   display: flex;
   flex: 1;
+
+  align-items: flex-end;
 }
 
 .chat-input {
@@ -407,7 +409,7 @@
   background-color: var(--white);
   color: var(--black);
   font-family: inherit;
-  padding: 10px 14px 50px;
+  padding: 10px;
   resize: none;
   outline: none;
 }
@@ -426,9 +428,10 @@
   background-color: var(--primary);
   color: white;
 
-  position: absolute;
-  right: 30px;
-  bottom: 30px;
+  white-space: nowrap;
+  margin-left: 10px;
+  padding: 10px 20px;
+  height: 20px;
 }
 
 .export-content {

@@ -42,6 +42,8 @@ import chatStyle from "./chat.module.scss";
 
 import { Input, Modal, showModal, showToast } from "./ui-lib";
 
+import TextareaAutosize from "react-textarea-autosize";
+
 const Markdown = dynamic(
   async () => memo((await import("./markdown")).Markdown),
   {
@@ -663,11 +665,11 @@ export function Chat(props: {
       <div className={styles["chat-input-panel"]}>
         <PromptHints prompts={promptHints} onPromptSelect={onPromptSelect} />
         <div className={styles["chat-input-panel-inner"]}>
-          <textarea
+          <TextareaAutosize
             ref={inputRef}
             className={styles["chat-input"]}
             placeholder={Locale.Chat.Input(submitKey, isMobileScreen())}
-            rows={2}
+            maxRows={4}
             onInput={(e) => onInput(e.currentTarget.value)}
             value={userInput}
             onKeyDown={onInputKeyDown}
