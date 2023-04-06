@@ -11,7 +11,7 @@ export async function requestOpenai(req: NextRequest) {
   // read ("nodejs" runtime seems to buffer the fetch()),
   // and the "edge" runtime does not support "fs".
   const usageUrl = `${req.nextUrl.origin}/api/usage`;
-  const usageRes = await fetch(usageUrl);
+  const usageRes = await fetch(usageUrl, { method: "POST" });
   const usageJson = await usageRes.json();
   const usgaeRemaining = usageJson?.usageRemaining || 0;
   if (usgaeRemaining <= 0) {
