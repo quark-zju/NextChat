@@ -335,10 +335,9 @@
 .chat-input-panel {
   width: 100%;
   padding: 20px;
-  padding-top: 5px;
+  padding-top: 16px;
   box-sizing: border-box;
   flex-direction: column;
-  overflow-y: hidden;
 }
 
 @mixin single-line {
@@ -398,21 +397,39 @@
   display: flex;
   flex: 1;
 
+  border-radius: 10px;
+  border: var(--border-in-light);
+  background-color: var(--white);
+
+  padding: 4px;
+
   align-items: flex-end;
 }
 
 .chat-input {
   height: 100%;
   width: 100%;
+  /*
   border-radius: 10px;
   border: var(--border-in-light);
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.03);
+  */
+  border: none;
   background-color: var(--white);
   color: var(--black);
   font-family: inherit;
+  /*
   padding: 10px;
+  */
   resize: none;
   outline: none;
+  line-height: 1.2;
+
+  align-self: center;
+
+  &:focus, &:active {
+    border: none;
+  }
 }
 
 @media only screen and (max-width: 600px) {
@@ -421,18 +438,19 @@
   }
 }
 
+/*
 .chat-input:focus {
   border: 1px solid var(--primary);
 }
+*/
 
 .chat-input-send {
   background-color: var(--primary);
   color: white;
 
   white-space: nowrap;
-  margin-left: 10px;
-  padding: 10px 20px;
-  height: 40px;
+  margin-left: 8px;
+  padding: 8px 16px;
 }
 
 .export-content {
