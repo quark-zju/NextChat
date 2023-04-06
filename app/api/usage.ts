@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-const usageLimitFile = 'usage-limit';
+const usageLimitFile = 'state/usage-limit';
 const defaultUsageLimit = 1001;
 
 function loadUsageLimit(): number {
