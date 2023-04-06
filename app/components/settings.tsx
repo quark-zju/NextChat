@@ -81,6 +81,7 @@ export function Settings(props: { closeSettings: () => void }) {
       state.clearSessions,
     ]);
 
+  /*
   const updateStore = useUpdateStore();
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const currentId = getCurrentVersion();
@@ -93,6 +94,7 @@ export function Settings(props: { closeSettings: () => void }) {
       setCheckingUpdate(false);
     });
   }
+  */
 
   const [usage, setUsage] = useState<{
     used?: number;
@@ -122,8 +124,10 @@ export function Settings(props: { closeSettings: () => void }) {
   const showUsage = !!accessStore.token || !!accessStore.accessCode;
 
   useEffect(() => {
+    /*
     checkUpdate();
     showUsage && checkUsage();
+    */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -192,6 +196,7 @@ export function Settings(props: { closeSettings: () => void }) {
             </Popover>
           </SettingItem>
 
+          {/*
           <SettingItem
             title={Locale.Settings.Update.Version(currentId)}
             subTitle={
@@ -216,6 +221,7 @@ export function Settings(props: { closeSettings: () => void }) {
               />
             )}
           </SettingItem>
+          */}
 
           <SettingItem title={Locale.Settings.SendKey}>
             <select
