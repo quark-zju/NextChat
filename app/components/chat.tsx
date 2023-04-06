@@ -545,6 +545,7 @@ export function Chat(props: {
               icon={<BrainIcon />}
               bordered
               title={Locale.Chat.Actions.CompressedHistory}
+              disabled={!session.memoryPrompt}
               onClick={() => {
                 setShowPromptModal(true);
               }}
