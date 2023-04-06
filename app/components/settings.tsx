@@ -358,7 +358,6 @@ export function Settings(props: { closeSettings: () => void }) {
           {enabledAccessControl ? (
             <SettingItem
               title={Locale.Settings.AccessCode.Title}
-              subTitle={Locale.Settings.AccessCode.SubTitle}
             >
               <PasswordInput
                 value={accessStore.accessCode}
