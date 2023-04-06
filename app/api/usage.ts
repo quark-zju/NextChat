@@ -41,6 +41,9 @@ export function getUsageRemaining(): number {
     if (usage % 5 === 0) {
       saveUsageLimit(usage);
     }
+  } else {
+    // Double check.
+    usage = loadUsageLimit();
   }
   return usage;
 }
