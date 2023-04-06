@@ -14,16 +14,8 @@ export async function requestOpenai(req: NextRequest) {
   const usageRes = await fetch(usageUrl);
   const usageJson = await usageRes.json();
   const usgaeRemaining = usageJson?.usageRemaining || 0;
-  if (usageJson?.usageRemaining <= 0) {
-    return NextResponse.json(
-      {
-        error: true,
-        msg: "Usage restricted.",
-      },
-      {
-        status: 401,
-      }
-    );
+  if (usgaeRemaining <= 0) {
+    throw new Error('No more usage available');
   }
 
   const apiKey = req.headers.get("token");
