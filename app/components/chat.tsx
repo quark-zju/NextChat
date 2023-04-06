@@ -485,21 +485,7 @@ export function Chat(props: {
             },
           ]
         : [],
-    )
-    .concat(
-      userInput.length > 0 && config.sendPreviewBubble
-        ? [
-            {
-              ...createMessage({
-                role: "user",
-                content: userInput,
-              }),
-              preview: true,
-            },
-          ]
-        : [],
     );
-
   const [showPromptModal, setShowPromptModal] = useState(false);
 
   // Auto focus

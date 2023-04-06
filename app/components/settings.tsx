@@ -308,6 +308,7 @@ export function Settings(props: { closeSettings: () => void }) {
             ></input>
           </SettingItem>
 
+          {/*
           <SettingItem title={Locale.Settings.SendPreviewBubble}>
             <input
               type="checkbox"
@@ -320,6 +321,7 @@ export function Settings(props: { closeSettings: () => void }) {
               }
             ></input>
           </SettingItem>
+          */}
         </List>
         <List>
           <SettingItem
