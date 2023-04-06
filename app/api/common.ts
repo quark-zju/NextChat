@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const OPENAI_URL = "api.openai.com";
 const DEFAULT_PROTOCOL = "https";
@@ -6,6 +6,26 @@ const PROTOCOL = process.env.PROTOCOL ?? DEFAULT_PROTOCOL;
 const BASE_URL = process.env.BASE_URL ?? OPENAI_URL;
 
 export async function requestOpenai(req: NextRequest) {
+  // Ask for usage information. Cannot check usage directly since
+  // chat-stream needs to use the "edge" runtime for streaming
+  // read ("nodejs" runtime seems to buffer the fetch()),
+  // and the "edge" runtime does not support "fs".
+  const usageUrl = `${req.nextUrl.origin}/api/usage`;
+  const usageRes = await fetch(usageUrl);
+  const usageJson = await usageRes.json();
+  const usgaeRemaining = usageJson?.usageRemaining || 0;
+  if (usageJson?.usageRemaining <= 0) {
+    return NextResponse.json(
+      {
+        error: true,
+        msg: "Usage restricted.",
+      },
+      {
+        status: 401,
+      }
+    );
+  }
+
   const apiKey = req.headers.get("token");
   const openaiPath = req.headers.get("path");
 
