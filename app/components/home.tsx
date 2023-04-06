@@ -26,6 +26,8 @@ import dynamic from "next/dynamic";
 import { REPO_URL } from "../constant";
 import { ErrorBoundary } from "./error";
 
+import { useAccessStore, AccessControlStore } from "../store";
+
 export function Loading(props: { noLogo?: boolean }) {
   return (
     <div className={styles["loading-content"]}>
@@ -86,6 +88,23 @@ const useHasHydrated = () => {
   return hasHydrated;
 };
 
+const useCheckHash = (accessStore: AccessControlStore) => {
+  useEffect(() => {
+    try {
+      const hash = window.location.hash;
+      if (hash.startsWith('#c')) {
+        const code = hash.substring(2);
+        accessStore.updateCode(code);
+        setTimeout(() => {
+          window.location.hash = '';
+          window.history.replaceState({}, '', window.location.href.slice(0, -1));
+        }, 1);
+      }
+    } catch {
+    }
+  }, []);
+}
+
 function _Home() {
   const [createNewSession, currentIndex, removeSession] = useChatStore(
     (state) => [
@@ -102,7 +121,10 @@ function _Home() {
   const config = useChatStore((state) => state.config);
   const isMobile = useScreen(screen => screen.isMobile);
 
+  const accessStore = useAccessStore();
+
   useSwitchTheme();
+  useCheckHash(accessStore);
 
   if (loading) {
     return <Loading />;
