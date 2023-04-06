@@ -6,6 +6,8 @@ import process from "child_process";
 import { ACCESS_CODES, IS_IN_DOCKER } from "./api/access";
 
 let COMMIT_ID: string | undefined;
+
+/*
 try {
   COMMIT_ID = process
     // .execSync("git describe --tags --abbrev=0")
@@ -15,6 +17,7 @@ try {
 } catch (e) {
   console.error("No git or not from git repo.");
 }
+*/
 
 export const metadata = {
   title: "ChatGPT Next Web",
