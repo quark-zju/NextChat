@@ -250,13 +250,15 @@
 
 .chat-message-avatar {
   margin-top: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
 }
 
 .chat-message-status {
   font-size: 12px;
   color: #aaa;
-  line-height: 1.5;
-  margin-top: 5px;
+  margin: 2px 10px;
 }
 
 .user-avtar {
