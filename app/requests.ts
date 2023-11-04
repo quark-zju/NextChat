@@ -8,6 +8,7 @@ const makeRequestParam = (
   messages: Message[],
   options?: {
     filterBot?: boolean;
+    useGpt3?: boolean;
     stream?: boolean;
   },
 ): ChatRequest => {
@@ -20,7 +21,10 @@ const makeRequestParam = (
     sendMessages = sendMessages.filter((m) => m.role !== "assistant");
   }
 
-  const modelConfig = useChatStore.getState().config.modelConfig;
+  let modelConfig = useChatStore.getState().config.modelConfig;
+  if (options?.useGpt3) {
+    modelConfig = { ...modelConfig, model: "gpt-3.5-turbo" };
+  }
 
   return {
     messages: sendMessages,
@@ -59,7 +63,10 @@ export function requestOpenaiClient(path: string) {
 }
 
 export async function requestChat(messages: Message[]) {
-  const req: ChatRequest = makeRequestParam(messages, { filterBot: true });
+  const req: ChatRequest = makeRequestParam(messages, {
+    filterBot: true,
+    useGpt3: true,
+  });
 
   const res = await requestOpenaiClient("v1/chat/completions")(req);
 
@@ -122,6 +129,7 @@ export async function requestChatStream(
   options?: {
     filterBot?: boolean;
     modelConfig?: ModelConfig;
+    useGpt3?: boolean;
     onMessage: (message: string, done: boolean) => void;
     onError: (error: Error, statusCode?: number) => void;
     onController?: (controller: AbortController) => void;
@@ -130,6 +138,7 @@ export async function requestChatStream(
   const req = makeRequestParam(messages, {
     stream: true,
     filterBot: options?.filterBot,
+    useGpt3: options?.useGpt3,
   });
 
   console.log("[Request] ", req);

@@ -502,6 +502,7 @@ export const useChatStore = create<ChatStore>()(
             }),
             {
               filterBot: false,
+              useGpt3: true,
               onMessage(message, done) {
                 session.memoryPrompt = message;
                 if (done) {
