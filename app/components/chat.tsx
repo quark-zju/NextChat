@@ -469,7 +469,9 @@ export function Chat(props: {
     context.length === 0 &&
     session.messages.at(0)?.content !== BOT_HELLO.content
   ) {
-    context.push(BOT_HELLO);
+    const model =
+      session.messages.find((m) => m.model)?.model ?? config.modelConfig.model;
+    context.push({ ...BOT_HELLO, model });
   }
 
   // preview messages
