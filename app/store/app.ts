@@ -77,6 +77,10 @@ export const ALL_MODELS = [
     name: "gpt-3.5-turbo",
     available: true,
   },
+  {
+    name: "gpt-4",
+    available: true,
+  },
 ];
 
 export function limitNumber(
@@ -95,7 +99,7 @@ export function limitNumber(
 export function limitModel(name: string) {
   return ALL_MODELS.some((m) => m.name === name && m.available)
     ? name
-    : ALL_MODELS[4].name;
+    : ALL_MODELS[0].name;
 }
 
 export const ModalConfigValidator = {
@@ -127,7 +131,7 @@ const DEFAULT_CONFIG: ChatConfig = {
   disablePromptHint: false,
 
   modelConfig: {
-    model: "gpt-3.5-turbo",
+    model: "gpt-4",
     temperature: 1,
     max_tokens: 2000,
     presence_penalty: 0,

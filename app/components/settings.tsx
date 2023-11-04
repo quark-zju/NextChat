@@ -437,7 +437,6 @@ export function Settings(props: { closeSettings: () => void }) {
         </List>
 
         <List>
-          {/*
           <SettingItem title={Locale.Settings.Model}>
             <select
               value={config.modelConfig.model}
@@ -457,7 +456,6 @@ export function Settings(props: { closeSettings: () => void }) {
               ))}
             </select>
           </SettingItem>
-          */}
           <SettingItem
             title={Locale.Settings.Temperature.Title}
             subTitle={Locale.Settings.Temperature.SubTitle}
