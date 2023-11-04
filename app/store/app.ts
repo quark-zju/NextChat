@@ -549,7 +549,7 @@ export const useChatStore = create<ChatStore>()(
     }),
     {
       name: LOCAL_KEY,
-      version: 1.2,
+      version: 1.3,
       migrate(persistedState, version) {
         const state = persistedState as ChatStore;
 
@@ -559,6 +559,17 @@ export const useChatStore = create<ChatStore>()(
 
         if (version < 1.2) {
           state.sessions.forEach((s) => (s.sendMemory = true));
+        }
+
+        if (version < 1.3) {
+          state.sessions.forEach((s) => {
+            s.messages.forEach((m) => {
+              if (m.role === "assistant") {
+                m.model = "gpt-3.5-turbo";
+              }
+            });
+          });
+          state.config.modelConfig.model = "gpt-4";
         }
 
         return state;
