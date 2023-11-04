@@ -356,9 +356,7 @@ export function Settings(props: { closeSettings: () => void }) {
         </List>
         <List>
           {enabledAccessControl ? (
-            <SettingItem
-              title={Locale.Settings.AccessCode.Title}
-            >
+            <SettingItem title={Locale.Settings.AccessCode.Title}>
               <PasswordInput
                 value={accessStore.accessCode}
                 type="text"
@@ -372,6 +370,7 @@ export function Settings(props: { closeSettings: () => void }) {
             <></>
           )}
 
+          {/*
           <SettingItem
             title={Locale.Settings.Usage.Title}
             subTitle={
@@ -395,6 +394,7 @@ export function Settings(props: { closeSettings: () => void }) {
               />
             )}
           </SettingItem>
+          */}
 
           <SettingItem
             title={Locale.Settings.HistoryCount.Title}
@@ -437,6 +437,7 @@ export function Settings(props: { closeSettings: () => void }) {
         </List>
 
         <List>
+          {/*
           <SettingItem title={Locale.Settings.Model}>
             <select
               value={config.modelConfig.model}
@@ -456,6 +457,7 @@ export function Settings(props: { closeSettings: () => void }) {
               ))}
             </select>
           </SettingItem>
+          */}
           <SettingItem
             title={Locale.Settings.Temperature.Title}
             subTitle={Locale.Settings.Temperature.SubTitle}
