@@ -16,6 +16,7 @@ export type Message = ChatCompletionResponseMessage & {
   streaming?: boolean;
   isError?: boolean;
   id?: number;
+  model?: string;
 };
 
 export function createMessage(override: Partial<Message>): Message {
@@ -334,6 +335,8 @@ export const useChatStore = create<ChatStore>()(
       },
 
       async onUserInput(content) {
+        let modelConfig = useChatStore.getState().config.modelConfig;
+
         const userMessage: Message = createMessage({
           role: "user",
           content,
@@ -342,6 +345,7 @@ export const useChatStore = create<ChatStore>()(
         const botMessage: Message = createMessage({
           role: "assistant",
           streaming: true,
+          model: modelConfig.model,
         });
 
         // get recent messages

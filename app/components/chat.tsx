@@ -235,7 +235,7 @@ function PromptToast(props: {
               <div className={chatStyle["memory-prompt"]}>
                 <div className={chatStyle["memory-prompt-title"]}>
                   <span>
-                    {Locale.Memory.Title} ({session.lastSummarizeIndex} / {" "}
+                    {Locale.Memory.Title} ({session.lastSummarizeIndex} /{" "}
                     {session.messages.length})
                   </span>
 
@@ -353,7 +353,7 @@ export function Chat(props: {
   const { scrollRef, setAutoScroll } = useScrollToBottom();
   const [hitBottom, setHitBottom] = useState(false);
 
-  const isMobile = useScreen(screen => screen.isMobile);
+  const isMobile = useScreen((screen) => screen.isMobile);
 
   const onChatBodyScroll = (e: HTMLElement) => {
     const isTouchBottom = e.scrollTop + e.clientHeight >= e.scrollHeight - 20;
@@ -473,21 +473,19 @@ export function Chat(props: {
   }
 
   // preview messages
-  const messages = context
-    .concat(session.messages as RenderMessage[])
-    .concat(
-      isLoading
-        ? [
-            {
-              ...createMessage({
-                role: "assistant",
-                content: "……",
-              }),
-              preview: true,
-            },
-          ]
-        : [],
-    );
+  const messages = context.concat(session.messages as RenderMessage[]).concat(
+    isLoading
+      ? [
+          {
+            ...createMessage({
+              role: "assistant",
+              content: "……",
+            }),
+            preview: true,
+          },
+        ]
+      : [],
+  );
   const [showPromptModal, setShowPromptModal] = useState(false);
 
   // Auto focus
@@ -640,6 +638,7 @@ export function Chat(props: {
                 {!isUser && !message.preview && (
                   <div className={styles["chat-message-actions"]}>
                     <div className={styles["chat-message-action-date"]}>
+                      {renderModelName(message.model)}
                       {message.date.toLocaleString()}
                     </div>
                   </div>
@@ -679,4 +678,9 @@ export function Chat(props: {
       </div>
     </div>
   );
+}
+
+function renderModelName(model?: string) {
+  if (!model || model?.length === 0) return null;
+  return model.replace("-turbo", "").replace("-", " ").toUpperCase() + " · ";
 }
