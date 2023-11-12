@@ -25,6 +25,9 @@ const makeRequestParam = (
   if (options?.useGpt3) {
     modelConfig = { ...modelConfig, model: "gpt-3.5-turbo" };
   }
+  if (modelConfig.model === "gpt-4") {
+    modelConfig = { ...modelConfig, model: "gpt-4-1106-preview" };
+  }
 
   return {
     messages: sendMessages,
