@@ -481,4 +481,16 @@
   button {
     padding: 4px 10px;
   }
+
+  .at, .dot {
+    user-select: none;
+  }
+
+  .at::before {
+    content: '@';
+  }
+
+  .dot::after {
+    content: '.';
+  }
 }

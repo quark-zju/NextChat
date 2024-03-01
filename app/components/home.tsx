@@ -239,7 +239,7 @@ export function Home() {
       typeof window.location !== "undefined"
     ) {
       const hostname = window.location.hostname;
-      setHostname(hostname.replace("chat.", ""));
+      setHostname(hostname.replace("chat.", "").replace(".net", ""));
     }
   });
 
@@ -262,7 +262,8 @@ export function Home() {
           If you are not familiar with the website administrator or have any
           concerns about the site&apos;s legitimacy, please refrain from
           entering personal information. For inquiries or further information,
-          contact admin at {hostname}.
+          contact admin <span className={styles["at"]}> </span>
+          {hostname} <span className={styles["dot"]}> </span> net.
         </p>
         <button onClick={() => setShowNotice(false)}>
           I understand. I have an access code and trust the website
