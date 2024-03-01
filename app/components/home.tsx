@@ -145,7 +145,7 @@ function _Home() {
         className={styles.sidebar + ` ${showSideBar && styles["sidebar-show"]}`}
       >
         <div className={styles["sidebar-header"]}>
-          <div className={styles["sidebar-title"]}>ChatGPT Next</div>
+          <div className={styles["sidebar-title"]}>ChatNext</div>
           <div className={styles["sidebar-logo"]}>
             <ChatGptIcon />
           </div>
@@ -238,8 +238,8 @@ export function Home() {
         <p>
           This website is a private instance for personal use, built on the
           open-source{" "}
-          <a href="https://github.com/ChatGPTNextWeb/">ChatGPT-Next</a> project.
-          It is not affiliated with the official ChatGPT or OpenAI.
+          <a href="https://github.com/ChatGPTNextWeb/">ChatGPTNextWeb</a>{" "}
+          project. It is not affiliated with the official ChatGPT or OpenAI.
         </p>
         <p>
           Please do not enter your personal information unless you have a direct
