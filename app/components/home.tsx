@@ -105,7 +105,7 @@ const useCheckHash = (accessStore: AccessControlStore) => {
         }, 1);
       }
     } catch {}
-  }, []);
+  }, [accessStore]);
 };
 
 function _Home() {
@@ -251,7 +251,7 @@ export function Home() {
           If you are not familiar with the website administrator or have any
           concerns about the site&apos;s legitimacy, please refrain from
           entering personal information. For inquiries or further information,
-          contact admin at {location.hostname}.
+          contact admin at {location?.hostname}.
         </p>
         <button onClick={() => setShowNotice(false)}>
           I understand. I have an access code and trust the website
