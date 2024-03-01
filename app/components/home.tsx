@@ -238,7 +238,8 @@ export function Home() {
       typeof window !== "undefined" &&
       typeof window.location !== "undefined"
     ) {
-      setHostname(window.location.hostname);
+      const hostname = window.location.hostname;
+      setHostname(hostname.replace("chat.", ""));
     }
   });
 
