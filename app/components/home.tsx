@@ -92,18 +92,21 @@ const useCheckHash = (accessStore: AccessControlStore) => {
   useEffect(() => {
     try {
       const hash = window.location.hash;
-      if (hash.startsWith('#c')) {
+      if (hash.startsWith("#c")) {
         const code = hash.substring(2);
         accessStore.updateCode(code);
         setTimeout(() => {
-          window.location.hash = '';
-          window.history.replaceState({}, '', window.location.href.slice(0, -1));
+          window.location.hash = "";
+          window.history.replaceState(
+            {},
+            "",
+            window.location.href.slice(0, -1),
+          );
         }, 1);
       }
-    } catch {
-    }
+    } catch {}
   }, []);
-}
+};
 
 function _Home() {
   const [createNewSession, currentIndex, removeSession] = useChatStore(
@@ -119,7 +122,7 @@ function _Home() {
   // setting
   const [openSettings, setOpenSettings] = useState(false);
   const config = useChatStore((state) => state.config);
-  const isMobile = useScreen(screen => screen.isMobile);
+  const isMobile = useScreen((screen) => screen.isMobile);
 
   const accessStore = useAccessStore();
 
@@ -147,7 +150,6 @@ function _Home() {
             <ChatGptIcon />
           </div>
         </div>
-
         <div
           className={styles["sidebar-body"]}
           onClick={() => {
@@ -180,14 +182,14 @@ function _Home() {
                 shadow
               />
             </div>
-            {null &&
-            <div className={styles["sidebar-action"]}>
-              <a href={REPO_URL} target="_blank">
-                <IconButton icon={<GithubIcon />} />
-                <IconButton icon={<GithubIcon />} shadow />
-              </a>
-            </div>
-            }
+            {null && (
+              <div className={styles["sidebar-action"]}>
+                <a href={REPO_URL} target="_blank">
+                  <IconButton icon={<GithubIcon />} />
+                  <IconButton icon={<GithubIcon />} shadow />
+                </a>
+              </div>
+            )}
           </div>
           <div>
             <IconButton
@@ -224,6 +226,40 @@ function _Home() {
 }
 
 export function Home() {
+  const accessStore = useAccessStore();
+  useCheckHash(accessStore);
+  const [showNotice, setShowNotice] = useState(
+    accessStore.accessCode.length === 0,
+  );
+
+  if (showNotice) {
+    return (
+      <div className={styles["access-notice"]}>
+        <p>
+          This website is a private instance for personal use, built on the
+          open-source{" "}
+          <a href="https://github.com/ChatGPTNextWeb/">ChatGPT-Next</a> project.
+          It is not affiliated with the official ChatGPT or OpenAI.
+        </p>
+        <p>
+          Please do not enter your personal information unless you have a direct
+          trust relationship with the website administrator. This site is
+          designed to be used with an access code provided by the administrator,
+          ensuring privacy and security.
+        </p>
+        <p>
+          If you are not familiar with the website administrator or have any
+          concerns about the site&apos;s legitimacy, please refrain from
+          entering personal information. For inquiries or further information,
+          contact admin at {location.hostname}.
+        </p>
+        <button onClick={() => setShowNotice(false)}>
+          I understand. I have an access code and trust the website
+          administrator.
+        </button>
+      </div>
+    );
+  }
   return (
     <ErrorBoundary>
       <_Home></_Home>
