@@ -2,7 +2,7 @@
 
 require("../polyfill");
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 
 import { IconButton } from "./button";
 import styles from "./home.module.scss";
@@ -231,6 +231,16 @@ export function Home() {
   const [showNotice, setShowNotice] = useState(
     accessStore.accessCode.length === 0,
   );
+  const [hostname, setHostname] = useState<string>("<loading>");
+
+  useLayoutEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      typeof window.location !== "undefined"
+    ) {
+      setHostname(window.location.hostname);
+    }
+  });
 
   if (showNotice) {
     return (
@@ -251,7 +261,7 @@ export function Home() {
           If you are not familiar with the website administrator or have any
           concerns about the site&apos;s legitimacy, please refrain from
           entering personal information. For inquiries or further information,
-          contact admin at {location?.hostname}.
+          contact admin at {hostname}.
         </p>
         <button onClick={() => setShowNotice(false)}>
           I understand. I have an access code and trust the website
