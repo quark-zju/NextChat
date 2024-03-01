@@ -26,7 +26,7 @@ const makeRequestParam = (
     modelConfig = { ...modelConfig, model: "gpt-3.5-turbo" };
   }
   if (modelConfig.model === "gpt-4") {
-    modelConfig = { ...modelConfig, model: "gpt-4-1106-preview" };
+    modelConfig = { ...modelConfig, model: "gpt-4-turbo-preview" };
   }
 
   return {
