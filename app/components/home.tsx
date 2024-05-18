@@ -116,7 +116,6 @@ function _Home() {
       state.removeSession,
     ],
   );
-  const loading = !useHasHydrated();
   const [showSideBar, setShowSideBar] = useState(true);
 
   // setting
@@ -128,10 +127,6 @@ function _Home() {
 
   useSwitchTheme();
   useCheckHash(accessStore);
-
-  if (loading) {
-    return <Loading />;
-  }
 
   return (
     <div
@@ -227,6 +222,8 @@ function _Home() {
 
 export function Home() {
   const accessStore = useAccessStore();
+  const loading = !useHasHydrated();
+
   useCheckHash(accessStore);
   const [showNotice, setShowNotice] = useState(
     accessStore.accessCode.length === 0,
@@ -242,6 +239,10 @@ export function Home() {
       setHostname(hostname.replace("chat.", "").replace(".net", ""));
     }
   });
+
+  if (loading) {
+    return <Loading />;
+  }
 
   if (showNotice) {
     return (
