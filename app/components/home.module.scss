@@ -270,6 +270,10 @@
   border: var(--border-in-light);
   box-shadow: var(--card-shadow);
   border-radius: 10px;
+  span {
+    min-width: fit-content;
+    min-height: fit-content;
+  }
 }
 
 .chat-message-item {
