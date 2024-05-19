@@ -43,6 +43,7 @@ import chatStyle from "./chat.module.scss";
 import { Input, Modal, showModal, showToast } from "./ui-lib";
 
 import TextareaAutosize from "react-textarea-autosize";
+import { EmojiStyle } from "emoji-picker-react";
 
 const Markdown = dynamic(
   async () => memo((await import("./markdown")).Markdown),
@@ -64,7 +65,12 @@ export function Avatar(props: { role: Message["role"] }) {
 
   return (
     <div className={styles["user-avtar"]}>
-      <Emoji unified={config.avatar} size={18} getEmojiUrl={getEmojiUrl} />
+      <Emoji
+        unified={config.avatar}
+        size={18}
+        getEmojiUrl={getEmojiUrl}
+        emojiStyle={EmojiStyle.NATIVE}
+      />
     </div>
   );
 }

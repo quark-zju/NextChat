@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo, HTMLProps } from "react";
 
-import EmojiPicker, { Theme as EmojiTheme } from "emoji-picker-react";
+import EmojiPicker, {
+  EmojiStyle,
+  Theme as EmojiTheme,
+} from "emoji-picker-react";
 
 import styles from "./settings.module.scss";
 
@@ -179,6 +182,7 @@ export function Settings(props: { closeSettings: () => void }) {
                   lazyLoadEmojis
                   theme={EmojiTheme.AUTO}
                   getEmojiUrl={getEmojiUrl}
+                  emojiStyle={EmojiStyle.NATIVE}
                   onEmojiClick={(e) => {
                     updateConfig((config) => (config.avatar = e.unified));
                     setShowEmojiPicker(false);
