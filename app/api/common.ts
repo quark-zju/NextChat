@@ -10,13 +10,13 @@ export async function requestOpenai(req: NextRequest) {
   // chat-stream needs to use the "edge" runtime for streaming
   // read ("nodejs" runtime seems to buffer the fetch()),
   // and the "edge" runtime does not support "fs".
-  const usageUrl = `${req.nextUrl.origin}/api/usage`;
-  const usageRes = await fetch(usageUrl, { method: "POST" });
-  const usageJson = await usageRes.json();
-  const usgaeRemaining = usageJson?.usageRemaining || 0;
-  if (usgaeRemaining <= 0) {
-    throw new Error('No more usage available');
-  }
+  // const usageUrl = `${req.nextUrl.origin}/api/usage`;
+  // const usageRes = await fetch(usageUrl, { method: "POST" });
+  // const usageJson = await usageRes.json();
+  // const usgaeRemaining = usageJson?.usageRemaining || 0;
+  // if (usgaeRemaining <= 0) {
+  //   throw new Error('No more usage available');
+  // }
 
   const apiKey = req.headers.get("token");
   const openaiPath = req.headers.get("path");
