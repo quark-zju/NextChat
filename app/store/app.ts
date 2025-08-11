@@ -76,10 +76,14 @@ const ENABLE_GPT4 = false;
 export const ALL_MODELS = [
   {
     name: "gpt-3.5-turbo",
-    available: true,
+    available: false,
   },
   {
     name: "gpt-4",
+    available: true,
+  },
+  {
+    name: "gpt-5",
     available: true,
   },
 ];
@@ -100,7 +104,7 @@ export function limitNumber(
 export function limitModel(name: string) {
   return ALL_MODELS.some((m) => m.name === name && m.available)
     ? name
-    : ALL_MODELS[0].name;
+    : ALL_MODELS[ALL_MODELS.length - 1].name;
 }
 
 export const ModalConfigValidator = {
@@ -132,7 +136,7 @@ const DEFAULT_CONFIG: ChatConfig = {
   disablePromptHint: false,
 
   modelConfig: {
-    model: "gpt-4",
+    model: "gpt-5",
     temperature: 1,
     max_tokens: 2000,
     presence_penalty: 0,
@@ -549,7 +553,7 @@ export const useChatStore = create<ChatStore>()(
     }),
     {
       name: LOCAL_KEY,
-      version: 1.3,
+      version: 1.4,
       migrate(persistedState, version) {
         const state = persistedState as ChatStore;
 
@@ -570,6 +574,10 @@ export const useChatStore = create<ChatStore>()(
             });
           });
           state.config.modelConfig.model = "gpt-4";
+        }
+
+        if (version < 1.4) {
+          state.config.modelConfig.model = "gpt-5";
         }
 
         return state;

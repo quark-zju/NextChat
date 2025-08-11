@@ -23,10 +23,13 @@ const makeRequestParam = (
 
   let modelConfig = useChatStore.getState().config.modelConfig;
   if (options?.useGpt3) {
-    modelConfig = { ...modelConfig, model: "gpt-3.5-turbo" };
+    modelConfig = { ...modelConfig, model: "gpt-4o-mini" };
   }
   if (modelConfig.model === "gpt-4") {
     modelConfig = { ...modelConfig, model: "gpt-4o" };
+  }
+  if (modelConfig.model === "gpt-5") {
+    modelConfig = { ...modelConfig, model: "gpt-5-chat-latest" };
   }
 
   return {
