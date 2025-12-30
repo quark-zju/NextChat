@@ -29,7 +29,12 @@ const makeRequestParam = (
     modelConfig = { ...modelConfig, model: "gpt-4o" };
   }
   if (modelConfig.model === "gpt-5") {
-    modelConfig = { ...modelConfig, model: "gpt-5-chat-latest" };
+    modelConfig = { ...modelConfig, model: "gpt-5.2-chat-latest" };
+    if (modelConfig.max_tokens !== null) {
+      // Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.
+      modelConfig.max_completion_tokens = modelConfig.max_tokens;
+      delete modelConfig.max_tokens;
+    }
   }
 
   return {

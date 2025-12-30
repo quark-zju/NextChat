@@ -59,7 +59,8 @@ export interface ChatConfig {
   modelConfig: {
     model: string;
     temperature: number;
-    max_tokens: number;
+    max_tokens?: number;
+    max_completion_tokens?: number;
     presence_penalty: number;
   };
 }
