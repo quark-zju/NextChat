@@ -486,7 +486,9 @@ export const useChatStore = create<ChatStore>()(
 
         const historyMsgLength = countMessages(toBeSummarizedMsgs);
 
-        if (historyMsgLength > get().config?.modelConfig?.max_tokens ?? 4000) {
+        if (
+          historyMsgLength > (get()?.config?.modelConfig?.max_tokens ?? 4000)
+        ) {
           const n = toBeSummarizedMsgs.length;
           toBeSummarizedMsgs = toBeSummarizedMsgs.slice(
             Math.max(0, n - config.historyMessageCount),
