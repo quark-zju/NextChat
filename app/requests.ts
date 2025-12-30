@@ -37,6 +37,8 @@ const makeRequestParam = (
     }
   }
 
+  // console.log("[Request Param] ", modelConfig);
+
   return {
     messages: sendMessages,
     stream: options?.stream,
