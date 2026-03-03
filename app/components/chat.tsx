@@ -101,6 +101,13 @@ function getModelPersona(model: string) {
   return Locale.Store.ModelPicker.GPT;
 }
 
+function getHeaderModelLabel(model?: string) {
+  const provider = getProviderByModel(model);
+  if (provider === "anthropic") return "Claude";
+  if (provider === "google") return "Gemini";
+  return "GPT";
+}
+
 export function Avatar(props: { role: Message["role"]; model?: string }) {
   const config = useChatStore((state) => state.config);
 
@@ -643,7 +650,7 @@ export function Chat(props: {
       .slice()
       .reverse()
       .find((m) => m.model)?.model ?? config.modelConfig.model;
-  const headerModelName = getCompactModelName(currentModel);
+  const headerModelName = getHeaderModelLabel(currentModel);
   const headerSubTitle = Locale.Chat.SubTitle(
     session.messages.length,
     headerModelName,
