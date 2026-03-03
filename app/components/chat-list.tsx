@@ -1,5 +1,8 @@
 import CloseIcon from "../icons/close.svg";
 import ArchiveIcon from "../icons/archive.svg";
+import ChatGptIcon from "../icons/chatgpt.svg";
+import GeminiIcon from "../icons/gemini.svg";
+import ClaudeIcon from "../icons/claude.svg";
 import styles from "./home.module.scss";
 import {
   DragDropContext,
@@ -12,6 +15,31 @@ import { useChatStore } from "../store";
 
 import Locale from "../locales";
 import { isMobileScreen } from "../utils";
+import { ChatSession } from "../store/app";
+
+function getProviderByModel(model?: string) {
+  if (!model) return "";
+  const provider = model.split("/")[0]?.toLowerCase();
+  if (provider === "openai") return "openai";
+  if (provider === "google") return "google";
+  if (provider === "anthropic") return "anthropic";
+  return "";
+}
+
+function renderModelIcon(model?: string) {
+  const provider = getProviderByModel(model);
+  if (provider === "openai") return <ChatGptIcon />;
+  if (provider === "google") return <GeminiIcon />;
+  if (provider === "anthropic") return <ClaudeIcon />;
+  return null;
+}
+
+function getSessionModel(session: ChatSession) {
+  return session.messages
+    .slice()
+    .reverse()
+    .find((m) => m.role === "assistant" && !!m.model)?.model;
+}
 
 export function ChatItem(props: {
   onClick?: () => void;
@@ -19,6 +47,7 @@ export function ChatItem(props: {
   onArchive?: () => void;
   archived?: boolean;
   title: string;
+  model?: string;
   count: number;
   time: string;
   selected: boolean;
@@ -37,7 +66,14 @@ export function ChatItem(props: {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
         >
-          <div className={styles["chat-item-title"]}>{props.title}</div>
+          <div className={styles["chat-item-title-row"]}>
+            {props.model && (
+              <span className={styles["chat-item-model-icon"]}>
+                {renderModelIcon(props.model)}
+              </span>
+            )}
+            <div className={styles["chat-item-title"]}>{props.title}</div>
+          </div>
           <div className={styles["chat-item-info"]}>
             <div className={styles["chat-item-count"]}>
               {Locale.ChatItem.ChatItemCount(props.count)}
@@ -133,6 +169,7 @@ export function ChatList() {
             {visibleSessions.map(({ session: item, index: sessionIndex }, i) => (
               <ChatItem
                 title={item.topic}
+                model={getSessionModel(item)}
                 time={item.lastUpdate}
                 count={item.messages.length}
                 key={item.id}
