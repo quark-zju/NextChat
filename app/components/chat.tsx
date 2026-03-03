@@ -16,6 +16,7 @@ import AddIcon from "../icons/add.svg";
 import DeleteIcon from "../icons/delete.svg";
 
 import {
+  ALL_MODELS,
   Message,
   SubmitKey,
   useChatStore,
@@ -72,6 +73,18 @@ function isMostlyEnglish(text: string) {
   const latinCount = (text.match(/[A-Za-z]/g) ?? []).length;
   const cjkCount = (text.match(/[\u4e00-\u9fff]/g) ?? []).length;
   return latinCount >= 40 && latinCount > cjkCount * 2;
+}
+
+function getCompactModelName(model?: string) {
+  if (!model || model.length === 0) return "";
+  return model.includes("/") ? model.split("/").at(-1) ?? model : model;
+}
+
+function getModelPersona(model: string) {
+  const provider = getProviderByModel(model);
+  if (provider === "anthropic") return Locale.Store.ModelPicker.Claude;
+  if (provider === "google") return Locale.Store.ModelPicker.Gemini;
+  return Locale.Store.ModelPicker.GPT;
 }
 
 export function Avatar(props: { role: Message["role"]; model?: string }) {
@@ -512,6 +525,13 @@ export function Chat(props: {
     });
   };
 
+  const onSelectModelForNewChat = (modelName: string) => {
+    chatStore.updateConfig((config) => {
+      config.modelConfig.model = modelName;
+    });
+    showToast(Locale.Store.ModelPicker.Selected(getCompactModelName(modelName)));
+  };
+
   const onTranslateReasoning = async (message: Message) => {
     if (!message.reasoning || message.reasoningTranslating) return;
 
@@ -677,6 +697,10 @@ export function Chat(props: {
       >
         {messages.map((message, i) => {
           const isUser = message.role === "user";
+          const isModelPicker =
+            !isUser &&
+            message.content === BOT_HELLO.content &&
+            session.messages.length === 0;
 
           return (
             <div
@@ -696,6 +720,7 @@ export function Chat(props: {
                 </div>
                 <div className={styles["chat-message-item"]}>
                   {!isUser &&
+                    !isModelPicker &&
                     !(message.preview || message.content.length === 0) && (
                       <div className={styles["chat-message-top-actions"]}>
                         {message.streaming ? (
@@ -723,8 +748,41 @@ export function Chat(props: {
                       </div>
                     )}
                   {(message.preview || message.content.length === 0) &&
-                  !isUser ? (
+                  !isUser &&
+                  !isModelPicker ? (
                     <LoadingIcon />
+                  ) : isModelPicker ? (
+                    <div className={styles["model-picker"]}>
+                      <div className={styles["model-picker-title"]}>
+                        {Locale.Store.ModelPicker.Title}
+                      </div>
+                      <div className={styles["model-picker-subtitle"]}>
+                        {Locale.Store.ModelPicker.SubTitle}
+                      </div>
+                      <div className={styles["model-picker-list"]}>
+                        {ALL_MODELS.filter((m) => m.available).map((m) => {
+                          const selected = config.modelConfig.model === m.name;
+                          return (
+                            <div
+                              key={m.name}
+                              className={
+                                styles["model-picker-item"] +
+                                " " +
+                                (selected ? styles["model-picker-item-selected"] : "")
+                              }
+                              onClick={() => onSelectModelForNewChat(m.name)}
+                            >
+                              <div className={styles["model-picker-name"]}>
+                                {getCompactModelName(m.name)}
+                              </div>
+                              <div className={styles["model-picker-persona"]}>
+                                {getModelPersona(m.name)}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   ) : (
                     <>
                       <div
@@ -810,7 +868,7 @@ export function Chat(props: {
 }
 
 function renderModelName(model?: string) {
-  if (!model || model?.length === 0) return null;
-  const compactName = model.includes("/") ? model.split("/").at(-1) : model;
+  const compactName = getCompactModelName(model);
+  if (!compactName) return null;
   return `${compactName} · `;
 }

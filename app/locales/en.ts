@@ -142,6 +142,15 @@ const en: LocaleType = {
     DefaultTopic: "New Conversation",
     BotHello: "Hello! How can I assist you today?",
     Error: "Something went wrong, please try again later.",
+    ModelPicker: {
+      Title: "Pick a model to start",
+      SubTitle: "Each model has a different style. You can change it anytime.",
+      Selected: (name: string) => `Switched to ${name}`,
+      Claude: "More human and patient, great for communication and rewriting.",
+      GPT: "Neutral and steady, with balanced general-purpose performance.",
+      Gemini:
+        "Strong in STEM and structured analysis, good for step-by-step reasoning.",
+    },
     Prompt: {
       History: (content: string) =>
         "This is a summary of the chat history between the AI and the user as a recap: " +

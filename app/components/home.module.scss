@@ -307,6 +307,56 @@
   position: relative;
 }
 
+.model-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.model-picker-title {
+  font-weight: 700;
+}
+
+.model-picker-subtitle {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.model-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.model-picker-item {
+  border: var(--border-in-light);
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all ease 0.2s;
+  background: var(--white);
+
+  &:hover {
+    border-color: var(--primary);
+  }
+}
+
+.model-picker-item-selected {
+  border-color: var(--primary);
+  box-shadow: var(--card-shadow);
+}
+
+.model-picker-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.model-picker-persona {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
 .chat-message-top-actions {
   font-size: 12px;
   position: absolute;
