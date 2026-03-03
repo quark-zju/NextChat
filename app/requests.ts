@@ -23,18 +23,7 @@ const makeRequestParam = (
 
   let modelConfig = useChatStore.getState().config.modelConfig;
   if (options?.useGpt3) {
-    modelConfig = { ...modelConfig, model: "gpt-4o-mini" };
-  }
-  if (modelConfig.model === "gpt-4") {
-    modelConfig = { ...modelConfig, model: "gpt-4o" };
-  }
-  if (modelConfig.model === "gpt-5") {
-    modelConfig = { ...modelConfig, model: "gpt-5.2-chat-latest" };
-    if (modelConfig.max_tokens !== null) {
-      // Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.
-      modelConfig.max_completion_tokens = modelConfig.max_tokens;
-      delete modelConfig.max_tokens;
-    }
+    modelConfig = { ...modelConfig, model: "openai/gpt-4o-mini" };
   }
 
   // console.log("[Request Param] ", modelConfig);
@@ -69,6 +58,9 @@ export function requestOpenaiClient(path: string) {
         "Content-Type": "application/json",
         "Cache-Control": "no-cache",
         path,
+        ...(typeof body?.model === "string"
+          ? { "x-chat-model": body.model }
+          : {}),
         ...getHeaders(),
       },
       body: body && JSON.stringify(body),
@@ -165,6 +157,7 @@ export async function requestChatStream(
       headers: {
         "Content-Type": "application/json",
         path: "v1/chat/completions",
+        ...(typeof req?.model === "string" ? { "x-chat-model": req.model } : {}),
         ...getHeaders(),
       },
       body: JSON.stringify(req),

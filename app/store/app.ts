@@ -69,22 +69,21 @@ export type ModelConfig = ChatConfig["modelConfig"];
 
 export const ROLES: Message["role"][] = ["system", "user", "assistant"];
 
-/*
-const ENABLE_GPT4 = true;
-*/
-const ENABLE_GPT4 = false;
-
 export const ALL_MODELS = [
   {
-    name: "gpt-3.5-turbo",
-    available: false,
-  },
-  {
-    name: "gpt-4",
+    name: "google/gemini-2.5-pro",
     available: true,
   },
   {
-    name: "gpt-5",
+    name: "anthropic/claude-sonnet-4",
+    available: true,
+  },
+  {
+    name: "openai/gpt-5",
+    available: true,
+  },
+  {
+    name: "openai/gpt-4o-mini",
     available: true,
   },
 ];
@@ -105,7 +104,7 @@ export function limitNumber(
 export function limitModel(name: string) {
   return ALL_MODELS.some((m) => m.name === name && m.available)
     ? name
-    : ALL_MODELS[ALL_MODELS.length - 1].name;
+    : ALL_MODELS.find((m) => m.available)?.name ?? ALL_MODELS[0].name;
 }
 
 export const ModalConfigValidator = {
@@ -137,7 +136,7 @@ const DEFAULT_CONFIG: ChatConfig = {
   disablePromptHint: false,
 
   modelConfig: {
-    model: "gpt-5",
+    model: "google/gemini-2.5-pro",
     temperature: 1,
     max_tokens: 2000,
     presence_penalty: 0,
@@ -568,19 +567,17 @@ export const useChatStore = create<ChatStore>()(
           state.sessions.forEach((s) => (s.sendMemory = true));
         }
 
-        if (version < 1.3) {
+        if (version < 1.4) {
           state.sessions.forEach((s) => {
             s.messages.forEach((m) => {
               if (m.role === "assistant") {
-                m.model = "gpt-3.5-turbo";
+                m.model = limitModel(m.model ?? "");
               }
             });
           });
-          state.config.modelConfig.model = "gpt-4";
-        }
-
-        if (version < 1.4) {
-          state.config.modelConfig.model = "gpt-5";
+          state.config.modelConfig.model = limitModel(
+            state.config.modelConfig.model,
+          );
         }
 
         return state;
