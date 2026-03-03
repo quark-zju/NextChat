@@ -240,14 +240,22 @@ function _Home() {
 export function Home() {
   const accessStore = useAccessStore();
   const loading = !useHasHydrated();
+  const isChineseBrowser =
+    typeof navigator !== "undefined" &&
+    [navigator.language, ...(navigator.languages ?? [])]
+      .join(",")
+      .toLowerCase()
+      .includes("zh");
 
   useCheckHash(accessStore);
-  const [showNotice, setShowNotice] = useState(!accessStore.noticeAccepted);
+  const [showNotice, setShowNotice] = useState(
+    !accessStore.noticeAccepted && !isChineseBrowser,
+  );
   const [hostname, setHostname] = useState<string>("<loading>");
 
   useEffect(() => {
-    setShowNotice(!accessStore.noticeAccepted);
-  }, [accessStore.noticeAccepted]);
+    setShowNotice(!accessStore.noticeAccepted && !isChineseBrowser);
+  }, [accessStore.noticeAccepted, isChineseBrowser]);
 
   useLayoutEffect(() => {
     if (
