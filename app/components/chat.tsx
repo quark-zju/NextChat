@@ -10,6 +10,8 @@ import DownloadIcon from "../icons/download.svg";
 import LoadingIcon from "../icons/three-dots.svg";
 import BotIcon from "../icons/bot.svg";
 import ChatGptIcon from "../icons/chatgpt.svg";
+import GeminiIcon from "../icons/gemini.svg";
+import ClaudeIcon from "../icons/claude.svg";
 import AddIcon from "../icons/add.svg";
 import DeleteIcon from "../icons/delete.svg";
 
@@ -76,15 +78,15 @@ export function Avatar(props: { role: Message["role"]; model?: string }) {
     }
     if (provider === "google") {
       return (
-        <div className={styles["provider-avatar"] + " " + styles["google"]}>
-          G
+        <div className={styles["provider-icon"]}>
+          <GeminiIcon />
         </div>
       );
     }
     if (provider === "anthropic") {
       return (
-        <div className={styles["provider-avatar"] + " " + styles["anthropic"]}>
-          A
+        <div className={styles["provider-icon"]}>
+          <ClaudeIcon />
         </div>
       );
     }

@@ -276,7 +276,7 @@
   }
 }
 
-.provider-avatar {
+.provider-icon {
   height: 30px;
   width: 30px;
   display: flex;
@@ -285,18 +285,12 @@
   border: var(--border-in-light);
   box-shadow: var(--card-shadow);
   border-radius: 10px;
-  font-size: 13px;
-  font-weight: 700;
-}
+  background: var(--white);
 
-.provider-avatar.google {
-  background: #e8f0fe;
-  color: #1967d2;
-}
-
-.provider-avatar.anthropic {
-  background: #f6efe7;
-  color: #8b5e34;
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .chat-message-item {
