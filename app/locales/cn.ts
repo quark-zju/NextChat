@@ -23,6 +23,8 @@ const cn = {
       Copy: "复制",
       Stop: "停止",
       Retry: "重试",
+      ShowReasoning: "查看思考过程",
+      HideReasoning: "收起思考过程",
     },
     Rename: "重命名对话",
     Typing: "正在输入…",
@@ -70,9 +72,6 @@ const cn = {
       Options: {
         cn: "简体中文",
         en: "English",
-        tw: "繁體中文",
-        es: "Español",
-        it: "Italiano",
       },
     },
     Avatar: "头像",

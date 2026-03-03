@@ -17,6 +17,8 @@ export type Message = ChatCompletionResponseMessage & {
   isError?: boolean;
   id?: number;
   model?: string;
+  reasoning?: string;
+  reasoningVisible?: boolean;
 };
 
 export function createMessage(override: Partial<Message>): Message {
@@ -350,6 +352,8 @@ export const useChatStore = create<ChatStore>()(
           role: "assistant",
           streaming: true,
           model: modelConfig.model,
+          reasoning: "",
+          reasoningVisible: false,
         });
 
         // get recent messages
@@ -381,6 +385,10 @@ export const useChatStore = create<ChatStore>()(
               botMessage.content = content;
               set(() => ({}));
             }
+          },
+          onReasoning(reasoning) {
+            botMessage.reasoning = reasoning;
+            set(() => ({}));
           },
           onError(error, statusCode) {
             if (statusCode === 401) {

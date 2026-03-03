@@ -19,6 +19,8 @@ const en: LocaleType = {
       Copy: "Copy",
       Stop: "Stop",
       Retry: "Retry",
+      ShowReasoning: "Show reasoning",
+      HideReasoning: "Hide reasoning",
     },
     Rename: "Rename Chat",
     Typing: "Typing…",
@@ -64,9 +66,6 @@ const en: LocaleType = {
       Options: {
         cn: "简体中文",
         en: "English",
-        tw: "繁體中文",
-        es: "Español",
-        it: "Italiano",
       },
     },
     Avatar: "Avatar",

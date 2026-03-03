@@ -3,6 +3,10 @@ import { Message, ModelConfig, useAccessStore, useChatStore } from "./store";
 import { showToast } from "./components/ui-lib";
 
 const TIME_OUT_MS = 30000;
+type StreamEvent =
+  | { type: "content"; text: string }
+  | { type: "reasoning"; text: string }
+  | { type: "done" };
 
 const makeRequestParam = (
   messages: Message[],
@@ -136,6 +140,7 @@ export async function requestChatStream(
     modelConfig?: ModelConfig;
     useGpt3?: boolean;
     onMessage: (message: string, done: boolean) => void;
+    onReasoning?: (reasoning: string, done: boolean) => void;
     onError: (error: Error, statusCode?: number) => void;
     onController?: (controller: AbortController) => void;
   },
@@ -166,9 +171,12 @@ export async function requestChatStream(
     clearTimeout(reqTimeoutId);
 
     let responseText = "";
+    let reasoningText = "";
+    let pendingText = "";
 
     const finish = () => {
       options?.onMessage(responseText, true);
+      options?.onReasoning?.(reasoningText, true);
       controller.abort();
     };
 
@@ -184,13 +192,55 @@ export async function requestChatStream(
         const content = await reader?.read();
         clearTimeout(resTimeoutId);
         const text = decoder.decode(content?.value);
-        responseText += text;
+        pendingText += text;
+
+        while (true) {
+          const newLineIndex = pendingText.indexOf("\n");
+          if (newLineIndex < 0) break;
+
+          const rawLine = pendingText.slice(0, newLineIndex);
+          pendingText = pendingText.slice(newLineIndex + 1);
+          if (rawLine.trim().length === 0) {
+            continue;
+          }
+
+          try {
+            const event = JSON.parse(rawLine) as StreamEvent;
+            if (event.type === "content") {
+              responseText += event.text ?? "";
+              options?.onMessage(responseText, false);
+            } else if (event.type === "reasoning") {
+              reasoningText += event.text ?? "";
+              options?.onReasoning?.(reasoningText, false);
+            } else if (event.type === "done") {
+              // handled by finish()
+            }
+          } catch {
+            responseText += (responseText.length === 0 ? "" : "\n") + rawLine;
+            options?.onMessage(responseText, false);
+          }
+        }
 
         const done = !content || content.done;
-        options?.onMessage(responseText, false);
 
         if (done) {
           break;
+        }
+      }
+
+      if (pendingText.trim().length > 0) {
+        try {
+          const event = JSON.parse(pendingText) as StreamEvent;
+          if (event.type === "content") {
+            responseText += event.text ?? "";
+            options?.onMessage(responseText, false);
+          } else if (event.type === "reasoning") {
+            reasoningText += event.text ?? "";
+            options?.onReasoning?.(reasoningText, false);
+          }
+        } catch {
+          responseText += (responseText.length === 0 ? "" : "\n") + pendingText;
+          options?.onMessage(responseText, false);
         }
       }
 

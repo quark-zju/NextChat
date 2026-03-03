@@ -467,6 +467,15 @@ export function Chat(props: {
     }
   };
 
+  const onToggleReasoning = (message: Message) => {
+    chatStore.updateCurrentSession((session) => {
+      const target = session.messages.find((m) => m.id === message.id);
+      if (target) {
+        target.reasoningVisible = !target.reasoningVisible;
+      }
+    });
+  };
+
   const config = useChatStore((state) => state.config);
 
   const context: RenderMessage[] = session.context.slice();
@@ -630,17 +639,38 @@ export function Chat(props: {
                   !isUser ? (
                     <LoadingIcon />
                   ) : (
-                    <div
-                      className="markdown-body"
-                      style={{ fontSize: `${fontSize}px` }}
-                      onContextMenu={(e) => onRightClick(e, message)}
-                      onDoubleClickCapture={() => {
-                        if (!isMobile) return;
-                        setUserInput(message.content);
-                      }}
-                    >
-                      <Markdown content={message.content} />
-                    </div>
+                    <>
+                      <div
+                        className="markdown-body"
+                        style={{ fontSize: `${fontSize}px` }}
+                        onContextMenu={(e) => onRightClick(e, message)}
+                        onDoubleClickCapture={() => {
+                          if (!isMobile) return;
+                          setUserInput(message.content);
+                        }}
+                      >
+                        <Markdown content={message.content} />
+                      </div>
+                      {!isUser && !!message.reasoning && (
+                        <div className={styles["chat-message-reasoning"]}>
+                          <div
+                            className={styles["chat-message-reasoning-toggle"]}
+                            onClick={() => onToggleReasoning(message)}
+                          >
+                            {message.reasoningVisible
+                              ? Locale.Chat.Actions.HideReasoning
+                              : Locale.Chat.Actions.ShowReasoning}
+                          </div>
+                          {message.reasoningVisible && (
+                            <div
+                              className={styles["chat-message-reasoning-content"]}
+                            >
+                              <Markdown content={message.reasoning} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
                 {!isUser && !message.preview && (
