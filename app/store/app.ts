@@ -155,6 +155,7 @@ export interface ChatSession {
   id: number;
   topic: string;
   archived: boolean;
+  lastTopicUpdateIndex?: number;
   sendMemory: boolean;
   memoryPrompt: string;
   context: Message[];
@@ -177,6 +178,7 @@ function createEmptySession(): ChatSession {
     id: Date.now(),
     topic: DEFAULT_TOPIC,
     archived: false,
+    lastTopicUpdateIndex: 0,
     sendMemory: true,
     memoryPrompt: "",
     context: [],
@@ -564,23 +566,28 @@ export const useChatStore = create<ChatStore>()(
         get().updateCurrentSession((session) => {
           session.messages = [];
           session.memoryPrompt = "";
+          session.lastTopicUpdateIndex = 0;
         });
       },
 
       summarizeSession() {
         const session = get().currentSession();
 
-        // should summarize topic after chating more than 50 words
-        const SUMMARIZE_MIN_LEN = 50;
+        // retry auto-title whenever new messages are added while topic
+        // is still the default title.
+        const topicLastTriedAt = session.lastTopicUpdateIndex ?? 0;
         if (
           session.topic === DEFAULT_TOPIC &&
-          countMessages(session.messages) >= SUMMARIZE_MIN_LEN
+          session.messages.length >= 2 &&
+          session.messages.length > topicLastTriedAt
         ) {
+          session.lastTopicUpdateIndex = session.messages.length;
           requestWithPrompt(session.messages, Locale.Store.Prompt.Topic).then(
             (res) => {
               get().updateCurrentSession(
-                (session) =>
-                  (session.topic = res ? trimTopic(res) : DEFAULT_TOPIC),
+                (session) => {
+                  session.topic = res ? trimTopic(res) : DEFAULT_TOPIC;
+                },
               );
             },
           );
