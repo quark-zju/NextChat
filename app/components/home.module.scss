@@ -511,6 +511,8 @@
 .chat-compressed-note {
   font-size: 12px;
   opacity: 0.8;
+  border-top: var(--border-in-light);
+  padding-top: 8px;
 }
 
 .chat-compressed-toggle {
