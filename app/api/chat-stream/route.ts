@@ -172,9 +172,26 @@ async function createStream(req: NextRequest) {
       }
 
       const parser = createParser(onParse);
-      for await (const chunk of res.body as any) {
-        if (closed) break;
-        parser.feed(decoder.decode(chunk));
+      try {
+        for await (const chunk of res.body as any) {
+          if (closed) break;
+          parser.feed(decoder.decode(chunk));
+        }
+      } catch (error: any) {
+        const code = error?.code ?? "";
+        const name = error?.name ?? "";
+        const isAbortLike =
+          code === "ECONNRESET" ||
+          code === "ERR_STREAM_PREMATURE_CLOSE" ||
+          name === "AbortError";
+        if (!isAbortLike) {
+          console.error("[Stream Body]", error);
+        } else if (DEV_REASONING_DEBUG) {
+          console.warn("[Reasoning Debug][server] upstream aborted", {
+            code,
+            name,
+          });
+        }
       }
       safeClose();
     },

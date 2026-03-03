@@ -194,6 +194,7 @@ export async function requestChatStream(
 
   const controller = new AbortController();
   const reqTimeoutId = setTimeout(() => controller.abort(), TIME_OUT_MS);
+  let finalized = false;
 
   try {
     const res = await fetch("/api/chat-stream", {
@@ -218,7 +219,10 @@ export async function requestChatStream(
     let firstReasoningAt: number | null = null;
     let firstContentAt: number | null = null;
 
-    const finish = () => {
+    const finish = (shouldAbort = false) => {
+      if (finalized) return;
+      finalized = true;
+      clearTimeout(reqTimeoutId);
       if (DEV_REASONING_DEBUG) {
         console.log("[Reasoning Debug][client] stream finish", {
           responseReadyMs: Math.round(responseReadyAt - requestStartedAt),
@@ -241,7 +245,9 @@ export async function requestChatStream(
       }
       options?.onMessage(responseText, true);
       options?.onReasoning?.(reasoningText, true);
-      controller.abort();
+      if (shouldAbort && !controller.signal.aborted) {
+        controller.abort();
+      }
     };
 
     if (res.ok) {
@@ -252,7 +258,7 @@ export async function requestChatStream(
 
       while (true) {
         // handle time out, will stop if no response in 10 secs
-        const resTimeoutId = setTimeout(() => finish(), TIME_OUT_MS);
+        const resTimeoutId = setTimeout(() => finish(true), TIME_OUT_MS);
         const content = await reader?.read();
         clearTimeout(resTimeoutId);
         const text = decoder.decode(content?.value);
@@ -329,7 +335,7 @@ export async function requestChatStream(
         }
       }
 
-      finish();
+      finish(false);
     } else if (res.status === 401) {
       console.error("Anauthorized");
       options?.onError(new Error("Anauthorized"), res.status);
@@ -338,6 +344,9 @@ export async function requestChatStream(
       options?.onError(new Error("Stream Error"), res.status);
     }
   } catch (err) {
+    if (finalized) {
+      return;
+    }
     console.error("NetWork Error", err);
     options?.onError(err as Error);
   }
