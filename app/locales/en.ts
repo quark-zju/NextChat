@@ -147,10 +147,11 @@ const en: LocaleType = {
       Title: "Pick a model to start",
       SubTitle: "Each model has a different style. You can change it anytime.",
       Selected: (name: string) => `Switched to ${name}`,
-      Claude: "More human and patient, great for communication and rewriting.",
-      GPT: "Neutral and steady, with balanced general-purpose performance.",
+      Claude:
+        "From Anthropic. More human and patient, great for communication and rewriting.",
+      GPT: "From OpenAI. Neutral and steady, with balanced general-purpose performance.",
       Gemini:
-        "Strong in STEM and structured analysis, good for step-by-step reasoning.",
+        "From Google. Strong in STEM and structured analysis, good for step-by-step reasoning.",
     },
     Prompt: {
       History: (content: string) =>
