@@ -861,7 +861,7 @@ export function Chat(props: {
         </div>
 
         <PromptToast
-          showToast={!hitBottom && !!session.memoryPrompt}
+          showToast={false}
           showModal={showPromptModal}
           setShowModal={setShowPromptModal}
         />
@@ -893,14 +893,16 @@ export function Chat(props: {
               }
             >
               <div className={styles["chat-message-container"]}>
-                <div className={styles["chat-message-avatar"]}>
-                  <Avatar role={message.role} model={message.model} />
-                  {(message.preview || message.streaming) && (
-                    <div className={styles["chat-message-status"]}>
-                      {Locale.Chat.Typing}
-                    </div>
-                  )}
-                </div>
+                {!isCompressedSummary && (
+                  <div className={styles["chat-message-avatar"]}>
+                    <Avatar role={message.role} model={message.model} />
+                    {(message.preview || message.streaming) && (
+                      <div className={styles["chat-message-status"]}>
+                        {Locale.Chat.Typing}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className={styles["chat-message-item"]}>
                   {!isUser &&
                     !isModelPicker &&
