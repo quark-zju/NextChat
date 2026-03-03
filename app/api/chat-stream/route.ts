@@ -86,6 +86,7 @@ function extractDelta(json: Record<string, any>) {
 async function createStream(req: NextRequest) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
+  const streamStartedAt = Date.now();
 
   const res = await requestOpenai(req);
 
@@ -101,6 +102,11 @@ async function createStream(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       let closed = false;
+      let sawDone = false;
+      let contentDeltaCount = 0;
+      let reasoningDeltaCount = 0;
+      let contentTotalLen = 0;
+      let reasoningTotalLen = 0;
 
       const safeEnqueue = (event: StreamChunkEvent) => {
         if (closed) return;
@@ -133,7 +139,18 @@ async function createStream(req: NextRequest) {
 
         // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
         if (data === "[DONE]") {
+          sawDone = true;
           safeEnqueue({ type: "done" });
+          if (DEV_REASONING_DEBUG) {
+            console.log("[Reasoning Debug][server] done marker", {
+              ts: Date.now(),
+              elapsedMs: Date.now() - streamStartedAt,
+              contentDeltaCount,
+              reasoningDeltaCount,
+              contentTotalLen,
+              reasoningTotalLen,
+            });
+          }
           safeClose();
           return;
         }
@@ -147,7 +164,11 @@ async function createStream(req: NextRequest) {
               const hasReasoningDetails =
                 Array.isArray(json?.choices?.[0]?.delta?.reasoning_details) &&
                 json.choices[0].delta.reasoning_details.length > 0;
-              if (content.length > 0 || reasoning.length > 0 || hasReasoningDetails) {
+              if (
+                content.length > 0 ||
+                reasoning.length > 0 ||
+                hasReasoningDetails
+              ) {
                 console.log("[Reasoning Debug][server]", {
                   ts: Date.now(),
                   model,
@@ -160,13 +181,17 @@ async function createStream(req: NextRequest) {
               }
             }
             if (content.length > 0) {
+              contentDeltaCount += 1;
+              contentTotalLen += content.length;
               safeEnqueue({ type: "content", text: content });
             }
             if (reasoning.length > 0) {
+              reasoningDeltaCount += 1;
+              reasoningTotalLen += reasoning.length;
               safeEnqueue({ type: "reasoning", text: reasoning });
             }
           } catch (e) {
-            console.error("[Stream Parse]", e);
+            console.error("[Stream Parse]", e, String(data).slice(0, 160));
           }
         }
       }
@@ -175,7 +200,11 @@ async function createStream(req: NextRequest) {
       try {
         for await (const chunk of res.body as any) {
           if (closed) break;
-          parser.feed(decoder.decode(chunk));
+          parser.feed(decoder.decode(chunk, { stream: true }));
+        }
+        const tail = decoder.decode();
+        if (tail.length > 0 && !closed) {
+          parser.feed(tail);
         }
       } catch (error: any) {
         const code = error?.code ?? "";
@@ -192,6 +221,16 @@ async function createStream(req: NextRequest) {
             name,
           });
         }
+      }
+      if (!sawDone && DEV_REASONING_DEBUG) {
+        console.warn("[Reasoning Debug][server] stream ended without [DONE]", {
+          ts: Date.now(),
+          elapsedMs: Date.now() - streamStartedAt,
+          contentDeltaCount,
+          reasoningDeltaCount,
+          contentTotalLen,
+          reasoningTotalLen,
+        });
       }
       safeClose();
     },

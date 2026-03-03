@@ -202,7 +202,9 @@ export async function requestChatStream(
       headers: {
         "Content-Type": "application/json",
         path: "v1/chat/completions",
-        ...(typeof req?.model === "string" ? { "x-chat-model": req.model } : {}),
+        ...(typeof req?.model === "string"
+          ? { "x-chat-model": req.model }
+          : {}),
         ...getHeaders(),
       },
       body: JSON.stringify(req),
@@ -216,6 +218,7 @@ export async function requestChatStream(
     let pendingText = "";
     let sawContentEvent = false;
     let sawReasoningEvent = false;
+    let sawDoneEvent = false;
     let firstReasoningAt: number | null = null;
     let firstContentAt: number | null = null;
 
@@ -240,6 +243,7 @@ export async function requestChatStream(
           reasoningLen: reasoningText.length,
           sawContentEvent,
           sawReasoningEvent,
+          sawDoneEvent,
           reasoningPreview: reasoningText.slice(0, 100),
         });
       }
@@ -261,7 +265,9 @@ export async function requestChatStream(
         const resTimeoutId = setTimeout(() => finish(true), TIME_OUT_MS);
         const content = await reader?.read();
         clearTimeout(resTimeoutId);
-        const text = decoder.decode(content?.value);
+        const text = decoder.decode(content?.value ?? new Uint8Array(), {
+          stream: !(content?.done ?? false),
+        });
         pendingText += text;
 
         while (true) {
@@ -292,7 +298,8 @@ export async function requestChatStream(
             } else if (event.type === "reasoning") {
               reasoningText += event.text ?? "";
               sawReasoningEvent = true;
-              if (firstReasoningAt == null) firstReasoningAt = performance.now();
+              if (firstReasoningAt == null)
+                firstReasoningAt = performance.now();
               if (DEV_REASONING_DEBUG && event.text?.length) {
                 console.log("[Reasoning Debug][client] reasoning delta", {
                   ts: Date.now(),
@@ -304,7 +311,7 @@ export async function requestChatStream(
               }
               options?.onReasoning?.(reasoningText, false);
             } else if (event.type === "done") {
-              // handled by finish()
+              sawDoneEvent = true;
             }
           } catch {
             responseText += (responseText.length === 0 ? "" : "\n") + rawLine;
