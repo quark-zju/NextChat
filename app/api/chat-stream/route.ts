@@ -100,15 +100,45 @@ async function createStream(req: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      function onParse(event: any) {
-        if (event.type === "event") {
-          const data = event.data;
-          // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
-          if (data === "[DONE]") {
-            controller.enqueue(encodeEvent(encoder, { type: "done" }));
-            controller.close();
-            return;
+      let closed = false;
+
+      const safeEnqueue = (event: StreamChunkEvent) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encodeEvent(encoder, event));
+        } catch (error) {
+          closed = true;
+          if (DEV_REASONING_DEBUG) {
+            console.warn("[Reasoning Debug][server] enqueue skipped", error);
           }
+        }
+      };
+
+      const safeClose = () => {
+        if (closed) return;
+        closed = true;
+        try {
+          controller.close();
+        } catch (error) {
+          if (DEV_REASONING_DEBUG) {
+            console.warn("[Reasoning Debug][server] close skipped", error);
+          }
+        }
+      };
+
+      function onParse(event: any) {
+        if (closed || event.type !== "event") return;
+        const data = event.data;
+        if (typeof data !== "string" || data.length === 0) return;
+
+        // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
+        if (data === "[DONE]") {
+          safeEnqueue({ type: "done" });
+          safeClose();
+          return;
+        }
+
+        if (event.type === "event") {
           try {
             const json = JSON.parse(data);
             const { content, reasoning } = extractDelta(json);
@@ -129,14 +159,10 @@ async function createStream(req: NextRequest) {
               }
             }
             if (content.length > 0) {
-              controller.enqueue(
-                encodeEvent(encoder, { type: "content", text: content }),
-              );
+              safeEnqueue({ type: "content", text: content });
             }
             if (reasoning.length > 0) {
-              controller.enqueue(
-                encodeEvent(encoder, { type: "reasoning", text: reasoning }),
-              );
+              safeEnqueue({ type: "reasoning", text: reasoning });
             }
           } catch (e) {
             console.error("[Stream Parse]", e);
@@ -146,8 +172,10 @@ async function createStream(req: NextRequest) {
 
       const parser = createParser(onParse);
       for await (const chunk of res.body as any) {
+        if (closed) break;
         parser.feed(decoder.decode(chunk));
       }
+      safeClose();
     },
   });
   return stream;

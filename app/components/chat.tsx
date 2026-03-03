@@ -505,6 +505,9 @@ export function Chat(props: {
   const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showCompressedInChat, setShowCompressedInChat] = useState(false);
+  const [reasoningVisibility, setReasoningVisibility] = useState<
+    Record<string, boolean>
+  >({});
   const { submitKey, shouldSubmit } = useSubmitHandler();
   const { scrollRef, setAutoScroll } = useScrollToBottom();
   const [hitBottom, setHitBottom] = useState(false);
@@ -690,13 +693,15 @@ export function Chat(props: {
     return undefined;
   };
 
+  const getReasoningKey = (message: Message & { sourceIndex?: number }) =>
+    `${message.sourceIndex ?? message.id ?? "unknown"}`;
+
   const onToggleReasoning = (message: Message & { sourceIndex?: number }) => {
-    chatStore.updateCurrentSession((session) => {
-      const target = findAssistantMessage(session.messages, message);
-      if (target) {
-        target.reasoningVisible = !target.reasoningVisible;
-      }
-    });
+    const key = getReasoningKey(message);
+    setReasoningVisibility((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
   };
 
   const onSelectModelForNewChat = (modelName: string) => {
@@ -857,6 +862,7 @@ export function Chat(props: {
 
   useEffect(() => {
     setShowCompressedInChat(false);
+    setReasoningVisibility({});
   }, [session.id, session.lastSummarizeIndex]);
 
   // Auto focus
@@ -986,7 +992,13 @@ export function Chat(props: {
             session.messages.length === 0;
           const hasAssistantText =
             typeof message.content === "string" && message.content.trim().length > 0;
+          const hasReasoning = (message.reasoning?.trim().length ?? 0) > 0;
+          const reasoningVisible = !!reasoningVisibility[getReasoningKey(message)];
           const isThinking = !isUser && !!message.streaming && !hasAssistantText;
+          const showLoadingOnly =
+            (message.preview || (!hasAssistantText && !hasReasoning)) &&
+            !isUser &&
+            !isModelPicker;
 
           return (
             <div
@@ -1040,9 +1052,7 @@ export function Chat(props: {
                         </div>
                       </div>
                     )}
-                  {(message.preview || message.content.length === 0) &&
-                  !isUser &&
-                  !isModelPicker ? (
+                  {showLoadingOnly ? (
                     <LoadingIcon />
                   ) : isModelPicker ? (
                     <div className={styles["model-picker"]}>
@@ -1136,28 +1146,30 @@ export function Chat(props: {
                           ))}
                         </div>
                       )}
-                      <div
-                        className="markdown-body"
-                        style={{ fontSize: `${fontSize}px` }}
-                        onContextMenu={(e) => onRightClick(e, message)}
-                        onDoubleClickCapture={() => {
-                          if (!isMobile) return;
-                          setUserInput(message.content);
-                        }}
-                      >
-                        <Markdown content={message.content} />
-                      </div>
-                      {!isUser && (message.reasoning?.trim().length ?? 0) > 0 && (
+                      {hasAssistantText && (
+                        <div
+                          className="markdown-body"
+                          style={{ fontSize: `${fontSize}px` }}
+                          onContextMenu={(e) => onRightClick(e, message)}
+                          onDoubleClickCapture={() => {
+                            if (!isMobile) return;
+                            setUserInput(message.content);
+                          }}
+                        >
+                          <Markdown content={message.content} />
+                        </div>
+                      )}
+                      {!isUser && hasReasoning && (
                         <div className={styles["chat-message-reasoning"]}>
                           <div
                             className={styles["chat-message-reasoning-toggle"]}
                             onClick={() => onToggleReasoning(message)}
                           >
-                            {message.reasoningVisible
+                            {reasoningVisible
                               ? Locale.Chat.Actions.HideReasoning
                               : Locale.Chat.Actions.ShowReasoning}
                           </div>
-                          {message.reasoningVisible && (
+                          {reasoningVisible && (
                             <div
                               className={styles["chat-message-reasoning-content"]}
                             >

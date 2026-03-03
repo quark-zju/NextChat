@@ -519,9 +519,6 @@ export const useChatStore = create<ChatStore>()(
               .replace(/\n{3,}/g, "\n\n")
               .trim();
             botMessage.reasoning = cleanedReasoning;
-            if (!botMessage.content || botMessage.content.trim().length === 0) {
-              botMessage.reasoningVisible = true;
-            }
             if (DEV_REASONING_DEBUG) {
               console.log("[Reasoning Debug][store] update", {
                 sessionIndex,
@@ -529,7 +526,6 @@ export const useChatStore = create<ChatStore>()(
                 streaming: botMessage.streaming,
                 contentLen: botMessage.content?.length ?? 0,
                 reasoningLen: cleanedReasoning.length,
-                reasoningVisible: botMessage.reasoningVisible,
                 reasoningPreview: cleanedReasoning.slice(0, 100),
               });
             }
