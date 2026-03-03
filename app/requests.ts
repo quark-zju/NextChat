@@ -60,6 +60,10 @@ const makeRequestParam = (
     modelConfig = { ...modelConfig, model: options.forceModel };
   }
 
+  if (modelConfig.max_tokens && modelConfig.max_tokens < 10000) {
+    modelConfig = { ...modelConfig, max_tokens: 10000 };
+  }
+
   // console.log("[Request Param] ", modelConfig);
 
   return {
