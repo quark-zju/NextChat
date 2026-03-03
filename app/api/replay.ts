@@ -1,28 +1,6 @@
-import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { ChatRequest } from "./openai/typing";
-
-type ReplayRequest = {
-  model: string;
-  messages: ChatRequest["messages"];
-  temperature?: number;
-  max_tokens?: number;
-  max_completion_tokens?: number;
-  presence_penalty?: number;
-};
-
-export type ReplayPayload = {
-  content: string;
-  reasoning: string;
-  events: ReplayEvent[];
-};
-
-export type ReplayEvent = {
-  type: "content" | "reasoning" | "done";
-  text?: string;
-  atMs: number;
-};
+import type { ReplayPayload, ReplayRequest } from "./replay-shared";
 
 type ReplayRecord = {
   version: 1;
@@ -34,10 +12,6 @@ type ReplayRecord = {
 
 const DEFAULT_REPLAY_DIR = "state/chat-replay";
 
-export function isReplayEnabled() {
-  return process.env.NODE_ENV !== "production";
-}
-
 function getReplayDirPath() {
   const dir = process.env.DEV_CHAT_REPLAY_DIR?.trim() || DEFAULT_REPLAY_DIR;
   return path.resolve(process.cwd(), dir);
@@ -45,44 +19,6 @@ function getReplayDirPath() {
 
 function getReplayFilePath(key: string) {
   return path.join(getReplayDirPath(), `${key}.json`);
-}
-
-function normalizeRequestBody(raw: unknown): ReplayRequest | null {
-  if (!raw || typeof raw !== "object") return null;
-  const body = raw as Record<string, unknown>;
-  if (typeof body.model !== "string" || !Array.isArray(body.messages)) {
-    return null;
-  }
-
-  return {
-    model: body.model,
-    messages: body.messages as ChatRequest["messages"],
-    temperature:
-      typeof body.temperature === "number" ? body.temperature : undefined,
-    max_tokens: typeof body.max_tokens === "number" ? body.max_tokens : undefined,
-    max_completion_tokens:
-      typeof body.max_completion_tokens === "number"
-        ? body.max_completion_tokens
-        : undefined,
-    presence_penalty:
-      typeof body.presence_penalty === "number" ? body.presence_penalty : undefined,
-  };
-}
-
-export function parseReplayRequest(raw: unknown) {
-  const request = normalizeRequestBody(raw);
-  if (!request) return null;
-
-  const keySource = {
-    model: request.model,
-    messages: request.messages,
-  };
-
-  const key = createHash("sha256")
-    .update(JSON.stringify(keySource))
-    .digest("hex");
-
-  return { key, request };
 }
 
 export async function findReplayPayload(key: string) {

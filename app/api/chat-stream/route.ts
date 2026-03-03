@@ -2,13 +2,12 @@ import { createParser } from "eventsource-parser";
 import { NextRequest } from "next/server";
 import { requestOpenai } from "../common";
 import {
-  findReplayPayload,
   isReplayEnabled,
   parseReplayRequest,
-  saveReplayRecord,
   type ReplayEvent,
   type ReplayPayload,
-} from "../replay";
+  type ReplayRequest,
+} from "../replay-shared";
 
 const SERVER_REASONING_DEBUG = process.env.DEBUG_REASONING_STREAM === "1";
 
@@ -82,6 +81,46 @@ function createReplayStream(payload: ReplayPayload) {
       safeClose();
     },
   });
+}
+
+async function loadReplayPayload(req: NextRequest, key: string) {
+  const url = new URL("/api/replay-store", req.nextUrl.origin);
+  url.searchParams.set("key", key);
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Cache-Control": "no-cache",
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Replay store read failed: ${res.status}`);
+  }
+
+  const json = (await res.json()) as {
+    ok?: boolean;
+    payload?: ReplayPayload | null;
+  };
+  return json.payload ?? null;
+}
+
+async function persistReplayPayload(
+  req: NextRequest,
+  key: string,
+  request: ReplayRequest,
+  payload: ReplayPayload,
+) {
+  const url = new URL("/api/replay-store", req.nextUrl.origin);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache",
+    },
+    body: JSON.stringify({ key, request, payload }),
+  });
+  if (!res.ok) {
+    throw new Error(`Replay store write failed: ${res.status}`);
+  }
 }
 
 function extractText(value: unknown): string {
@@ -167,7 +206,7 @@ async function createStream(req: NextRequest) {
     .catch(() => null);
 
   if (replayEnabled && replayRequest) {
-    const payload = await findReplayPayload(replayRequest.key);
+    const payload = await loadReplayPayload(req, replayRequest.key);
     if (payload) {
       console.log("[Replay] hit", replayRequest.key);
       return createReplayStream(payload);
@@ -185,7 +224,7 @@ async function createStream(req: NextRequest) {
     console.log("[Stream] error ", content);
 
     if (replayEnabled && replayRequest) {
-      await saveReplayRecord(replayRequest.key, replayRequest.request, {
+      await persistReplayPayload(req, replayRequest.key, replayRequest.request, {
         content: "```json\n" + content + "```",
         reasoning: "",
         events: [
@@ -381,11 +420,16 @@ async function createStream(req: NextRequest) {
           if (!hasDone) {
             replayEvents.push({ type: "done", atMs: Date.now() - streamStartedAt });
           }
-          await saveReplayRecord(replayRequest.key, replayRequest.request, {
+          await persistReplayPayload(
+            req,
+            replayRequest.key,
+            replayRequest.request,
+            {
             content: replayContent,
             reasoning: replayReasoning,
             events: replayEvents,
-          });
+            },
+          );
           console.log("[Replay] recorded", replayRequest.key, replayEvents.length);
         } catch (error) {
           console.error("[Replay] record failed", error);
@@ -417,7 +461,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 // export const config = {
 //   runtime: "edge",
 // };
