@@ -140,9 +140,6 @@ function _Home() {
       >
         <div className={styles["sidebar-header"]}>
           <div className={styles["sidebar-title"]}>ChatNext</div>
-          <div className={styles["sidebar-logo"]}>
-            <BotIcon />
-          </div>
         </div>
         <div
           className={styles["sidebar-body"]}
