@@ -4,16 +4,20 @@ const OPENAI_BASE_URL = "api.openai.com";
 const OPENROUTER_BASE_URL = "openrouter.ai/api";
 const DEFAULT_PROTOCOL = "https";
 const PROTOCOL = process.env.PROTOCOL ?? DEFAULT_PROTOCOL;
+const HAS_OPENAI_KEY = !!process.env.OPENAI_API_KEY;
 
 // Keep this list small and explicit. Add models here when you want
 // direct OpenAI routing instead of default OpenRouter routing.
 const OPENAI_DIRECT_MODELS = new Set<string>([
   "openai/gpt-4o-mini",
   "gpt-4o-mini",
+  "openai/gpt-4.1-mini",
+  "gpt-4.1-mini",
 ]);
 
 function shouldUseOpenAI(path: string, model?: string) {
   if (path.startsWith("dashboard/")) return true;
+  if (!HAS_OPENAI_KEY) return false;
   if (!model) return false;
   const normalized = model.startsWith("openai/")
     ? model.slice("openai/".length)

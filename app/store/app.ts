@@ -526,7 +526,7 @@ export const useChatStore = create<ChatStore>()(
             }),
             {
               filterBot: false,
-              useGpt3: true,
+              forceModel: "openai/gpt-4o-mini",
               onMessage(message, done) {
                 session.memoryPrompt = message;
                 if (done) {

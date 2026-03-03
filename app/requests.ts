@@ -3,6 +3,7 @@ import { Message, ModelConfig, useAccessStore, useChatStore } from "./store";
 import { showToast } from "./components/ui-lib";
 
 const TIME_OUT_MS = 30000;
+const INTERNAL_COMPACT_MODEL = "openai/gpt-4o-mini";
 type StreamEvent =
   | { type: "content"; text: string }
   | { type: "reasoning"; text: string }
@@ -12,7 +13,7 @@ const makeRequestParam = (
   messages: Message[],
   options?: {
     filterBot?: boolean;
-    useGpt3?: boolean;
+    forceModel?: string;
     stream?: boolean;
   },
 ): ChatRequest => {
@@ -54,8 +55,8 @@ const makeRequestParam = (
   }
 
   let modelConfig = useChatStore.getState().config.modelConfig;
-  if (options?.useGpt3) {
-    modelConfig = { ...modelConfig, model: "openai/gpt-4o-mini" };
+  if (options?.forceModel) {
+    modelConfig = { ...modelConfig, model: options.forceModel };
   }
 
   // console.log("[Request Param] ", modelConfig);
@@ -99,10 +100,13 @@ export function requestOpenaiClient(path: string) {
     });
 }
 
-export async function requestChat(messages: Message[]) {
+export async function requestChat(
+  messages: Message[],
+  options?: { forceModel?: string },
+) {
   const req: ChatRequest = makeRequestParam(messages, {
     filterBot: true,
-    useGpt3: true,
+    forceModel: options?.forceModel,
   });
 
   const res = await requestOpenaiClient("v1/chat/completions")(req);
@@ -166,7 +170,7 @@ export async function requestChatStream(
   options?: {
     filterBot?: boolean;
     modelConfig?: ModelConfig;
-    useGpt3?: boolean;
+    forceModel?: string;
     onMessage: (message: string, done: boolean) => void;
     onReasoning?: (reasoning: string, done: boolean) => void;
     onError: (error: Error, statusCode?: number) => void;
@@ -176,7 +180,7 @@ export async function requestChatStream(
   const req = makeRequestParam(messages, {
     stream: true,
     filterBot: options?.filterBot,
-    useGpt3: options?.useGpt3,
+    forceModel: options?.forceModel,
   });
 
   console.log("[Request] ", req);
@@ -295,7 +299,9 @@ export async function requestWithPrompt(messages: Message[], prompt: string) {
     },
   ]);
 
-  const res = await requestChat(messages);
+  const res = await requestChat(messages, {
+    forceModel: INTERNAL_COMPACT_MODEL,
+  });
 
   return res?.choices?.at(0)?.message?.content ?? "";
 }
