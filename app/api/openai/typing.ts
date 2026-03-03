@@ -21,5 +21,8 @@ export type ChatRequest = {
   max_tokens?: number;
   max_completion_tokens?: number;
   presence_penalty?: number;
+  reasoning?: {
+    effort?: "low" | "medium" | "high";
+  };
 };
 export type ChatReponse = CreateChatCompletionResponse;

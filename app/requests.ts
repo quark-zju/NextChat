@@ -10,6 +10,10 @@ type StreamEvent =
   | { type: "reasoning"; text: string }
   | { type: "done" };
 
+function shouldUseMediumReasoningEffort(model?: string) {
+  return typeof model === "string" && model.startsWith("google/gemini-");
+}
+
 const makeRequestParam = (
   messages: Message[],
   options?: {
@@ -62,10 +66,15 @@ const makeRequestParam = (
 
   // console.log("[Request Param] ", modelConfig);
 
+  const reasoning = shouldUseMediumReasoningEffort(modelConfig.model)
+    ? { effort: "medium" as const }
+    : undefined;
+
   return {
     messages: sendMessages,
     stream: options?.stream,
     ...modelConfig,
+    ...(reasoning ? { reasoning } : {}),
   };
 };
 
