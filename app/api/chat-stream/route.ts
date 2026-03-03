@@ -161,13 +161,22 @@ async function createStream(req: NextRequest) {
             const { content, reasoning } = extractDelta(json);
             if (DEV_REASONING_DEBUG) {
               const model = json?.model ?? "-";
+              const finishReason = json?.choices?.[0]?.finish_reason ?? null;
+              const usage = json?.usage ?? null;
               const hasReasoningDetails =
                 Array.isArray(json?.choices?.[0]?.delta?.reasoning_details) &&
                 json.choices[0].delta.reasoning_details.length > 0;
+              const delta = json?.choices?.[0]?.delta;
+              const deltaKeys =
+                delta && typeof delta === "object"
+                  ? Object.keys(delta as Record<string, unknown>)
+                  : [];
               if (
                 content.length > 0 ||
                 reasoning.length > 0 ||
-                hasReasoningDetails
+                hasReasoningDetails ||
+                finishReason ||
+                usage
               ) {
                 console.log("[Reasoning Debug][server]", {
                   ts: Date.now(),
@@ -175,7 +184,9 @@ async function createStream(req: NextRequest) {
                   contentLen: content.length,
                   reasoningLen: reasoning.length,
                   hasReasoningDetails,
-                  finishReason: json?.choices?.[0]?.finish_reason ?? null,
+                  finishReason,
+                  usage,
+                  deltaKeys,
                   reasoningPreview: reasoning.slice(0, 100),
                 });
               }
