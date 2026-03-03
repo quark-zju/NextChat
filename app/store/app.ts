@@ -234,7 +234,9 @@ interface ChatStore {
   clearAllData: () => void;
 }
 
-function countMessages(msgs: Message[]) {
+function countMessagesForCompression(msgs: Message[]) {
+  // Compression only considers visible chat content.
+  // Assistant reasoning/thinking fields are intentionally excluded.
   return msgs.reduce((pre, cur) => pre + (cur.content?.length ?? 0), 0);
 }
 
@@ -639,7 +641,8 @@ export const useChatStore = create<ChatStore>()(
           session.lastSummarizeIndex,
         );
 
-        const historyMsgLength = countMessages(toBeSummarizedMsgs);
+        const historyMsgLength =
+          countMessagesForCompression(toBeSummarizedMsgs);
 
         if (
           historyMsgLength > (get()?.config?.modelConfig?.max_tokens ?? 4000)
