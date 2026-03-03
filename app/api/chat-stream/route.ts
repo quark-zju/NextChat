@@ -2,7 +2,7 @@ import { createParser } from "eventsource-parser";
 import { NextRequest } from "next/server";
 import { requestOpenai } from "../common";
 
-const DEV_REASONING_DEBUG = process.env.NODE_ENV !== "production";
+const SERVER_REASONING_DEBUG = process.env.DEBUG_REASONING_STREAM === "1";
 
 type StreamChunkEvent =
   | { type: "content"; text: string }
@@ -116,7 +116,7 @@ async function createStream(req: NextRequest) {
           controller.enqueue(encodeEvent(encoder, event));
         } catch (error) {
           closed = true;
-          if (DEV_REASONING_DEBUG) {
+          if (SERVER_REASONING_DEBUG) {
             console.warn("[Reasoning Debug][server] enqueue skipped", error);
           }
         }
@@ -128,7 +128,7 @@ async function createStream(req: NextRequest) {
         try {
           controller.close();
         } catch (error) {
-          if (DEV_REASONING_DEBUG) {
+          if (SERVER_REASONING_DEBUG) {
             console.warn("[Reasoning Debug][server] close skipped", error);
           }
         }
@@ -143,7 +143,7 @@ async function createStream(req: NextRequest) {
         if (data === "[DONE]") {
           sawDone = true;
           safeEnqueue({ type: "done" });
-          if (DEV_REASONING_DEBUG) {
+          if (SERVER_REASONING_DEBUG) {
             console.log("[Reasoning Debug][server] done marker", {
               traceId,
               ts: Date.now(),
@@ -163,7 +163,7 @@ async function createStream(req: NextRequest) {
             eventIndex += 1;
             const json = JSON.parse(data);
             const { content, reasoning } = extractDelta(json);
-            if (DEV_REASONING_DEBUG) {
+            if (SERVER_REASONING_DEBUG) {
               const model = json?.model ?? "-";
               const finishReason = json?.choices?.[0]?.finish_reason ?? null;
               const usage = json?.usage ?? null;
@@ -238,7 +238,7 @@ async function createStream(req: NextRequest) {
           name === "AbortError";
         if (!isAbortLike) {
           console.error("[Stream Body]", error);
-        } else if (DEV_REASONING_DEBUG) {
+        } else if (SERVER_REASONING_DEBUG) {
           console.warn("[Reasoning Debug][server] upstream aborted", {
             traceId,
             code,
@@ -246,7 +246,7 @@ async function createStream(req: NextRequest) {
           });
         }
       }
-      if (!sawDone && DEV_REASONING_DEBUG) {
+      if (!sawDone && SERVER_REASONING_DEBUG) {
         console.warn("[Reasoning Debug][server] stream ended without [DONE]", {
           traceId,
           ts: Date.now(),
