@@ -152,9 +152,9 @@ const cn = {
       Title: "先选一个模型开始聊天",
       SubTitle: "不同模型风格不同，随时可在设置里再切换",
       Selected: (name: string) => `已切换到 ${name}`,
-      Claude: "Anthropic 出品，更人性化、更耐心，适合沟通和表达润色",
+      Claude: "Anthropic 出品，偏人性化、偏耐心，适合沟通和表达润色",
       GPT: "OpenAI 出品，中立稳健、综合平衡，通用任务表现稳定",
-      Gemini: "Google 出品，理科、结构化分析和图片分析都更强，适合步骤推理与归纳",
+      Gemini: "Google 出品，偏理科、偏结构化分析，图片分析也很强，适合步骤推理与归纳",
     },
     Prompt: {
       History: (content: string) =>

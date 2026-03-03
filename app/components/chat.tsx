@@ -77,7 +77,20 @@ function isMostlyEnglish(text: string) {
 
 function getCompactModelName(model?: string) {
   if (!model || model.length === 0) return "";
-  return model.includes("/") ? model.split("/").at(-1) ?? model : model;
+  const rawName = model.includes("/") ? model.split("/").at(-1) ?? model : model;
+  const withoutSuffix = rawName.replace(/-pro-preview$/i, "");
+
+  return withoutSuffix
+    .split("-")
+    .filter(Boolean)
+    .map((part) => {
+      const lower = part.toLowerCase();
+      if (lower === "gpt") return "GPT";
+      if (lower === "ai") return "AI";
+      if (/^\d+(\.\d+)*$/.test(part)) return part;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
 }
 
 function getModelPersona(model: string) {
