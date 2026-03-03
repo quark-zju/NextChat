@@ -76,15 +76,15 @@ export const ROLES: Message["role"][] = ["system", "user", "assistant"];
 
 export const ALL_MODELS = [
   {
-    name: "google/gemini-2.5-pro",
+    name: "google/gemini-3.1-pro-preview",
     available: true,
   },
   {
-    name: "anthropic/claude-sonnet-4",
+    name: "anthropic/claude-opus-4.6",
     available: true,
   },
   {
-    name: "openai/gpt-5",
+    name: "openai/gpt-5.2",
     available: true,
   },
 ];
@@ -137,7 +137,7 @@ const DEFAULT_CONFIG: ChatConfig = {
   disablePromptHint: false,
 
   modelConfig: {
-    model: "google/gemini-2.5-pro",
+    model: "google/gemini-3.1-pro-preview",
     temperature: 1,
     max_tokens: 2000,
     presence_penalty: 0,
