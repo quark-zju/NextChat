@@ -484,6 +484,66 @@
   padding-top: 8px;
 }
 
+.chat-compressed-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-compressed-note {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.chat-compressed-toggle {
+  width: fit-content;
+  border: var(--border-in-light);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--black);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.chat-compressed-history {
+  border: var(--border-in-light);
+  border-radius: 8px;
+  background: var(--white);
+  padding: 10px;
+  max-height: 280px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-compressed-empty {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.chat-compressed-history-item {
+  border-bottom: var(--border-in-light);
+  padding-bottom: 8px;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.chat-compressed-role {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.chat-compressed-content {
+  font-size: 13px;
+  word-break: break-word;
+}
+
 .chat-message-reasoning-toggle {
   font-size: 12px;
   color: var(--black);

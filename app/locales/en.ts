@@ -45,6 +45,7 @@ const en: LocaleType = {
   Memory: {
     Title: "Memory Prompt",
     EmptyContent: "Nothing yet.",
+    CompressedToast: "Conversation compressed, click to view",
     CompressedNotice:
       "Conversation has been compressed. The AI can only see the compressed summary above, not the full original dialogue.",
     ExpandCompressed: "Expand conversation",

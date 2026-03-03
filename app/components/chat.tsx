@@ -194,7 +194,6 @@ function PromptToast(props: {
 }) {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
-  const context = session.context;
   const [showCompressedMessages, setShowCompressedMessages] = useState(false);
 
   const compressedEndIndex = Math.max(
@@ -233,7 +232,7 @@ function PromptToast(props: {
         >
           <BrainIcon />
           <span className={chatStyle["prompt-toast-content"]}>
-            {Locale.Context.Toast(context.length)}
+            {Locale.Memory.CompressedToast}
           </span>
         </div>
       )}
@@ -474,7 +473,12 @@ export function Chat(props: {
   showSideBar?: () => void;
   sideBarShowing?: boolean;
 }) {
-  type RenderMessage = Message & { preview?: boolean };
+  type RenderMessage = Message & {
+    preview?: boolean;
+    compressedSummary?: boolean;
+    compressedMessages?: Message[];
+    sourceIndex?: number;
+  };
 
   const chatStore = useChatStore();
   const [session, sessionIndex] = useChatStore((state) => [
@@ -488,6 +492,7 @@ export function Chat(props: {
   const [userInput, setUserInput] = useState("");
   const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCompressedInChat, setShowCompressedInChat] = useState(false);
   const { submitKey, shouldSubmit } = useSubmitHandler();
   const { scrollRef, setAutoScroll } = useScrollToBottom();
   const [hitBottom, setHitBottom] = useState(false);
@@ -635,13 +640,13 @@ export function Chat(props: {
     }
   };
 
-  const onResend = (botIndex: number) => {
+  const onResend = (botIndexInSession: number) => {
     // find last user input message and resend
-    for (let i = botIndex; i >= 0; i -= 1) {
-      if (messages[i].role === "user") {
+    for (let i = botIndexInSession; i >= 0; i -= 1) {
+      if (session.messages[i]?.role === "user") {
         setIsLoading(true);
         chatStore
-          .onUserInput(messages[i].content, messages[i].imageUrls)
+          .onUserInput(session.messages[i].content, session.messages[i].imageUrls)
           .then(() => setIsLoading(false));
         chatStore.updateCurrentSession((session) =>
           session.messages.splice(i, 2),
@@ -713,6 +718,15 @@ export function Chat(props: {
   );
 
   const context: RenderMessage[] = session.context.slice();
+  const compressedEndIndex = Math.max(
+    0,
+    Math.min(session.lastSummarizeIndex, session.messages.length),
+  );
+  const compressedMessages = session.messages
+    .slice(0, compressedEndIndex)
+    .filter((m) => !m.isError);
+  const shouldShowCompressedSummaryInChat =
+    compressedEndIndex > 0 && !!session.memoryPrompt;
 
   if (context.length === 0 && session.messages.length === 0) {
     const model =
@@ -720,8 +734,30 @@ export function Chat(props: {
     context.push({ ...BOT_HELLO, model });
   }
 
+  const renderedSessionMessages: RenderMessage[] = shouldShowCompressedSummaryInChat
+    ? [
+        {
+          ...createMessage({
+            role: "assistant",
+            content: session.memoryPrompt,
+            model: compressedMessages
+              .slice()
+              .reverse()
+              .find((m) => m.role === "assistant" && !!m.model)?.model,
+          }),
+          date: compressedMessages.at(-1)?.date ?? session.lastUpdate,
+          compressedSummary: true,
+          compressedMessages,
+          sourceIndex: compressedEndIndex - 1,
+        },
+        ...session.messages
+          .slice(compressedEndIndex)
+          .map((m, idx) => ({ ...m, sourceIndex: idx + compressedEndIndex })),
+      ]
+    : session.messages.map((m, idx) => ({ ...m, sourceIndex: idx }));
+
   // preview messages
-  const messages = context.concat(session.messages as RenderMessage[]).concat(
+  const messages = context.concat(renderedSessionMessages).concat(
     isLoading
       ? [
           {
@@ -735,6 +771,10 @@ export function Chat(props: {
       : [],
   );
   const [showPromptModal, setShowPromptModal] = useState(false);
+
+  useEffect(() => {
+    setShowCompressedInChat(false);
+  }, [session.id, session.lastSummarizeIndex]);
 
   // Auto focus
   useEffect(() => {
@@ -839,6 +879,7 @@ export function Chat(props: {
       >
         {messages.map((message, i) => {
           const isUser = message.role === "user";
+          const isCompressedSummary = !!message.compressedSummary;
           const isModelPicker =
             !isUser &&
             message.content === BOT_HELLO.content &&
@@ -863,6 +904,7 @@ export function Chat(props: {
                 <div className={styles["chat-message-item"]}>
                   {!isUser &&
                     !isModelPicker &&
+                    !isCompressedSummary &&
                     !(message.preview || message.content.length === 0) && (
                       <div className={styles["chat-message-top-actions"]}>
                         {message.streaming ? (
@@ -875,7 +917,7 @@ export function Chat(props: {
                         ) : (
                           <div
                             className={styles["chat-message-top-action"]}
-                            onClick={() => onResend(i)}
+                            onClick={() => onResend(message.sourceIndex ?? i)}
                           >
                             {Locale.Chat.Actions.Retry}
                           </div>
@@ -924,6 +966,52 @@ export function Chat(props: {
                           );
                         })}
                       </div>
+                    </div>
+                  ) : isCompressedSummary ? (
+                    <div className={styles["chat-compressed-summary"]}>
+                      <div className={styles["chat-compressed-note"]}>
+                        {Locale.Memory.CompressedNotice}
+                      </div>
+                      <div
+                        className="markdown-body"
+                        style={{ fontSize: `${fontSize}px` }}
+                      >
+                        <Markdown content={message.content} />
+                      </div>
+                      <button
+                        type="button"
+                        className={styles["chat-compressed-toggle"]}
+                        onClick={() => setShowCompressedInChat((v) => !v)}
+                      >
+                        {showCompressedInChat
+                          ? Locale.Memory.CollapseCompressed
+                          : Locale.Memory.ExpandCompressed}
+                      </button>
+                      {showCompressedInChat && (
+                        <div className={styles["chat-compressed-history"]}>
+                          {(message.compressedMessages ?? []).length === 0 ? (
+                            <div className={styles["chat-compressed-empty"]}>
+                              {Locale.Memory.EmptyCompressedHistory}
+                            </div>
+                          ) : (
+                            (message.compressedMessages ?? []).map((m, idx) => (
+                              <div
+                                key={`${m.id ?? idx}-${m.date}`}
+                                className={styles["chat-compressed-history-item"]}
+                              >
+                                <div className={styles["chat-compressed-role"]}>
+                                  {m.role === "user"
+                                    ? Locale.Export.MessageFromYou
+                                    : Locale.Export.MessageFromChatGPT}
+                                </div>
+                                <div className={styles["chat-compressed-content"]}>
+                                  <Markdown content={m.content} />
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <>
@@ -976,7 +1064,7 @@ export function Chat(props: {
                     </>
                   )}
                 </div>
-                {!isUser && !message.preview && (
+                {!isUser && !message.preview && !isCompressedSummary && (
                   <div className={styles["chat-message-actions"]}>
                     <div className={styles["chat-message-action-date"]}>
                       {renderModelName(message.model)}
