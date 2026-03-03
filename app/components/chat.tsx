@@ -640,10 +640,7 @@ export function Chat(props: {
 
   const context: RenderMessage[] = session.context.slice();
 
-  if (
-    context.length === 0 &&
-    session.messages.at(0)?.content !== BOT_HELLO.content
-  ) {
+  if (context.length === 0 && session.messages.length === 0) {
     const model =
       session.messages.find((m) => m.model)?.model ?? config.modelConfig.model;
     context.push({ ...BOT_HELLO, model });
