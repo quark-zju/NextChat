@@ -906,6 +906,9 @@ export function Chat(props: {
             !isUser &&
             message.content === BOT_HELLO.content &&
             session.messages.length === 0;
+          const hasAssistantText =
+            typeof message.content === "string" && message.content.trim().length > 0;
+          const isThinking = !isUser && !!message.streaming && !hasAssistantText;
 
           return (
             <div
@@ -924,7 +927,7 @@ export function Chat(props: {
                     <Avatar role={message.role} model={message.model} />
                     {(message.preview || message.streaming) && (
                       <div className={styles["chat-message-status"]}>
-                        {Locale.Chat.Typing}
+                        {isThinking ? Locale.Chat.Thinking : Locale.Chat.Typing}
                       </div>
                     )}
                   </div>

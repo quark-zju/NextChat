@@ -26,6 +26,7 @@ const en: LocaleType = {
     },
     Rename: "Rename Chat",
     Typing: "Typing…",
+    Thinking: "Thinking…",
     Input: (submitKey: string) => {
       var inputHints = `Type something and press ${submitKey} to send`;
       if (submitKey === String(SubmitKey.Enter)) {

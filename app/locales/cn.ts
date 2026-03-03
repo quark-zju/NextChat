@@ -29,6 +29,7 @@ const cn = {
     },
     Rename: "重命名对话",
     Typing: "正在输入…",
+    Thinking: "正在思考…",
     Input: (submitKey: string, isMobile: boolean) => {
       if (isMobile) {
         return '输入消息';
