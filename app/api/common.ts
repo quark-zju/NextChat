@@ -7,12 +7,18 @@ const PROTOCOL = process.env.PROTOCOL ?? DEFAULT_PROTOCOL;
 
 // Keep this list small and explicit. Add models here when you want
 // direct OpenAI routing instead of default OpenRouter routing.
-const OPENAI_DIRECT_MODELS = new Set<string>([]);
+const OPENAI_DIRECT_MODELS = new Set<string>([
+  "openai/gpt-4o-mini",
+  "gpt-4o-mini",
+]);
 
 function shouldUseOpenAI(path: string, model?: string) {
   if (path.startsWith("dashboard/")) return true;
   if (!model) return false;
-  return OPENAI_DIRECT_MODELS.has(model);
+  const normalized = model.startsWith("openai/")
+    ? model.slice("openai/".length)
+    : model;
+  return OPENAI_DIRECT_MODELS.has(model) || OPENAI_DIRECT_MODELS.has(normalized);
 }
 
 function getProviderConfig(path: string, model?: string) {
