@@ -665,7 +665,6 @@ export function Chat(props: {
     chatStore.updateConfig((config) => {
       config.modelConfig.model = modelName;
     });
-    showToast(Locale.Store.ModelPicker.Selected(getCompactModelName(modelName)));
   };
 
   const onTranslateReasoning = async (message: Message) => {

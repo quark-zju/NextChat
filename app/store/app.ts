@@ -439,7 +439,24 @@ export const useChatStore = create<ChatStore>()(
       },
 
       async onUserInput(content, imageUrls = []) {
-        let modelConfig = useChatStore.getState().config.modelConfig;
+        const config = useChatStore.getState().config;
+        const session = get().currentSession();
+        const latestSessionModel = session.messages
+          .slice()
+          .reverse()
+          .find((m) => m.role === "assistant" && !!m.model)?.model;
+        const shouldKeepSessionModel =
+          !!latestSessionModel &&
+          ALL_MODELS.some(
+            (m) => m.name === latestSessionModel && m.available,
+          );
+        const resolvedModel = shouldKeepSessionModel
+          ? latestSessionModel
+          : limitModel(config.modelConfig.model);
+        const modelConfig = {
+          ...config.modelConfig,
+          model: resolvedModel,
+        };
 
         const userMessage: Message = createMessage({
           role: "user",
@@ -512,7 +529,7 @@ export const useChatStore = create<ChatStore>()(
             );
           },
           filterBot: !get().config.sendBotMessages,
-          modelConfig: get().config.modelConfig,
+          modelConfig,
         });
       },
 

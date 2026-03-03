@@ -21,7 +21,6 @@ import {
   SubmitKey,
   useChatStore,
   Theme,
-  ALL_MODELS,
   useUpdateStore,
   useAccessStore,
   ModalConfigValidator,
@@ -441,25 +440,6 @@ export function Settings(props: { closeSettings: () => void }) {
         </List>
 
         <List>
-          <SettingItem title={Locale.Settings.Model}>
-            <select
-              value={config.modelConfig.model}
-              onChange={(e) => {
-                updateConfig(
-                  (config) =>
-                    (config.modelConfig.model = ModalConfigValidator.model(
-                      e.currentTarget.value,
-                    )),
-                );
-              }}
-            >
-              {ALL_MODELS.map((v) => (
-                <option value={v.name} key={v.name} disabled={!v.available}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
-          </SettingItem>
           <SettingItem
             title={Locale.Settings.Temperature.Title}
             subTitle={Locale.Settings.Temperature.SubTitle}
