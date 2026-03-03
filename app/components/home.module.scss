@@ -276,6 +276,29 @@
   }
 }
 
+.provider-avatar {
+  height: 30px;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--border-in-light);
+  box-shadow: var(--card-shadow);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.provider-avatar.google {
+  background: #e8f0fe;
+  color: #1967d2;
+}
+
+.provider-avatar.anthropic {
+  background: #f6efe7;
+  color: #8b5e34;
+}
+
 .chat-message-item {
   box-sizing: border-box;
   max-width: 100%;

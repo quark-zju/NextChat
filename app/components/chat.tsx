@@ -9,6 +9,7 @@ import CopyIcon from "../icons/copy.svg";
 import DownloadIcon from "../icons/download.svg";
 import LoadingIcon from "../icons/three-dots.svg";
 import BotIcon from "../icons/bot.svg";
+import ChatGptIcon from "../icons/chatgpt.svg";
 import AddIcon from "../icons/add.svg";
 import DeleteIcon from "../icons/delete.svg";
 
@@ -56,10 +57,37 @@ const Emoji = dynamic(async () => (await import("emoji-picker-react")).Emoji, {
   loading: () => <LoadingIcon />,
 });
 
-export function Avatar(props: { role: Message["role"] }) {
+function getProviderByModel(model?: string) {
+  if (!model) return "default";
+  const provider = model.split("/")[0]?.toLowerCase();
+  if (provider === "openai") return "openai";
+  if (provider === "google") return "google";
+  if (provider === "anthropic") return "anthropic";
+  return "default";
+}
+
+export function Avatar(props: { role: Message["role"]; model?: string }) {
   const config = useChatStore((state) => state.config);
 
   if (props.role !== "user") {
+    const provider = getProviderByModel(props.model);
+    if (provider === "openai") {
+      return <ChatGptIcon className={styles["user-avtar"]} />;
+    }
+    if (provider === "google") {
+      return (
+        <div className={styles["provider-avatar"] + " " + styles["google"]}>
+          G
+        </div>
+      );
+    }
+    if (provider === "anthropic") {
+      return (
+        <div className={styles["provider-avatar"] + " " + styles["anthropic"]}>
+          A
+        </div>
+      );
+    }
     return <BotIcon className={styles["user-avtar"]} />;
   }
 
@@ -600,7 +628,7 @@ export function Chat(props: {
             >
               <div className={styles["chat-message-container"]}>
                 <div className={styles["chat-message-avatar"]}>
-                  <Avatar role={message.role} />
+                  <Avatar role={message.role} model={message.model} />
                   {(message.preview || message.streaming) && (
                     <div className={styles["chat-message-status"]}>
                       {Locale.Chat.Typing}
@@ -720,5 +748,6 @@ export function Chat(props: {
 
 function renderModelName(model?: string) {
   if (!model || model?.length === 0) return null;
-  return model.replace("-turbo", "").replace("-", " ").toUpperCase() + " · ";
+  const compactName = model.includes("/") ? model.split("/").at(-1) : model;
+  return `${compactName} · `;
 }

@@ -9,7 +9,6 @@ import styles from "./home.module.scss";
 
 import SettingsIcon from "../icons/settings.svg";
 import GithubIcon from "../icons/github.svg";
-import ChatGptIcon from "../icons/chatgpt.svg";
 
 import BotIcon from "../icons/bot.svg";
 import AddIcon from "../icons/add.svg";
@@ -142,7 +141,7 @@ function _Home() {
         <div className={styles["sidebar-header"]}>
           <div className={styles["sidebar-title"]}>ChatNext</div>
           <div className={styles["sidebar-logo"]}>
-            <ChatGptIcon />
+            <BotIcon />
           </div>
         </div>
         <div
