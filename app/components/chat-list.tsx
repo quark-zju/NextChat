@@ -1,4 +1,4 @@
-import DeleteIcon from "../icons/delete.svg";
+import CloseIcon from "../icons/close.svg";
 import ArchiveIcon from "../icons/archive.svg";
 import styles from "./home.module.scss";
 import {
@@ -61,7 +61,7 @@ export function ChatItem(props: {
               props.onDelete?.();
             }}
           >
-            <DeleteIcon />
+            <CloseIcon />
           </div>
         </div>
       )}
