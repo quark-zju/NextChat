@@ -63,6 +63,8 @@ const cn = {
     UnarchiveChat: "取消归档",
     ViewArchivedChats: "查看归档对话",
     ViewActiveChats: "查看进行中对话",
+    EmptyArchivedChats: "还没有归档对话",
+    EmptyActiveChats: "还没有进行中的对话",
   },
   Settings: {
     Title: "设置",

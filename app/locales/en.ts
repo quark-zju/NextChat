@@ -57,6 +57,8 @@ const en: LocaleType = {
     UnarchiveChat: "Unarchive chat",
     ViewArchivedChats: "View archived chats",
     ViewActiveChats: "View active chats",
+    EmptyArchivedChats: "No archived chats yet",
+    EmptyActiveChats: "No active chats yet",
   },
   Settings: {
     Title: "Settings",

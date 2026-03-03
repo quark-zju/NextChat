@@ -123,6 +123,13 @@ export function ChatList() {
             ref={provided.innerRef}
             {...provided.droppableProps}
           >
+            {visibleSessions.length === 0 && (
+              <div className={styles["chat-list-empty"]}>
+                {showArchived
+                  ? Locale.Home.EmptyArchivedChats
+                  : Locale.Home.EmptyActiveChats}
+              </div>
+            )}
             {visibleSessions.map(({ session: item, index: sessionIndex }, i) => (
               <ChatItem
                 title={item.topic}
