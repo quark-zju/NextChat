@@ -273,6 +273,10 @@
   box-shadow: var(--card-shadow);
 }
 
+.sidebar-action-archive {
+  transition: none !important;
+}
+
 .chat {
   display: flex;
   flex-direction: column;

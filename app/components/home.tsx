@@ -189,7 +189,9 @@ function _Home() {
                   setOpenSettings(false);
                 }}
                 shadow
-                className={showArchived ? styles["sidebar-action-active"] : ""}
+                className={`${styles["sidebar-action-archive"]} ${
+                  showArchived ? styles["sidebar-action-active"] : ""
+                }`}
                 title={
                   showArchived
                     ? Locale.Home.ViewActiveChats
