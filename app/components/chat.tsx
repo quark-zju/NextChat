@@ -13,6 +13,7 @@ import ChatGptIcon from "../icons/chatgpt.svg";
 import GeminiIcon from "../icons/gemini.svg";
 import ClaudeIcon from "../icons/claude.svg";
 import AddIcon from "../icons/add.svg";
+import CameraIcon from "../icons/camera.svg";
 import DeleteIcon from "../icons/delete.svg";
 
 import {
@@ -946,10 +947,9 @@ export function Chat(props: {
             onChange={(e) => onPickImages(e.currentTarget.files)}
           />
           <IconButton
-            icon={<AddIcon />}
+            icon={<CameraIcon />}
             className={styles["chat-image-picker"]}
             onClick={() => imageInputRef.current?.click()}
-            bordered
             title={Locale.Chat.Actions.UploadImage}
           />
           <TextareaAutosize
