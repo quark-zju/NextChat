@@ -657,11 +657,17 @@ export function Chat(props: {
   };
 
   const getMessageReorderId = (message: RenderMessage, index: number) => {
-    const baseId =
-      message.id ??
-      message.sourceIndex ??
-      `${message.role}-${message.date}-${index}`;
-    return `${session.id}:${baseId}:${message.preview ? "preview" : "normal"}`;
+    const sourcePart =
+      typeof message.sourceIndex === "number"
+        ? `src-${message.sourceIndex}`
+        : `idx-${index}`;
+    const rolePart = message.role;
+    const typePart = message.compressedSummary
+      ? "compressed"
+      : message.preview
+      ? "preview"
+      : "normal";
+    return `${session.id}:${sourcePart}:${rolePart}:${typePart}`;
   };
   const onRightClick = (e: any, message: Message) => {
     // auto fill user input
