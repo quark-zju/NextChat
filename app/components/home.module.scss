@@ -404,7 +404,8 @@
 }
 
 .model-picker-item-selected {
-  border-color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 9px;
   box-shadow: var(--card-shadow);
 }
 
