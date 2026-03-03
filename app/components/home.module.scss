@@ -391,9 +391,9 @@
 }
 
 .model-picker-item {
-  border: var(--border-in-light);
+  border: 2px solid var(--border-color);
   border-radius: 10px;
-  padding: 10px;
+  padding: 9px;
   cursor: pointer;
   transition: all ease 0.2s;
   background: var(--white);
