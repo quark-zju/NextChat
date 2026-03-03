@@ -657,6 +657,9 @@ export function Chat(props: {
   };
 
   const getMessageReorderId = (message: RenderMessage, index: number) => {
+    if (message.compressedSummary) {
+      return undefined;
+    }
     const sourcePart =
       typeof message.sourceIndex === "number"
         ? `src-${message.sourceIndex}`
@@ -1054,10 +1057,11 @@ export function Chat(props: {
               !isUser &&
               !isModelPicker;
             const reorderId = getMessageReorderId(message, i);
+            const renderKey = reorderId ?? `static:${session.id}:${i}`;
 
             return (
               <div
-                key={reorderId}
+                key={renderKey}
                 data-reorder-id={reorderId}
                 className={
                   isUser ? styles["chat-message-user"] : styles["chat-message"]
