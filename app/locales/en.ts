@@ -19,6 +19,7 @@ const en: LocaleType = {
       Copy: "Copy",
       Stop: "Stop",
       Retry: "Retry",
+      UploadImage: "Upload image",
       ShowReasoning: "Show reasoning",
       HideReasoning: "Hide reasoning",
     },

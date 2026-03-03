@@ -93,7 +93,11 @@ export function Avatar(props: { role: Message["role"]; model?: string }) {
   if (props.role !== "user") {
     const provider = getProviderByModel(props.model);
     if (provider === "openai") {
-      return <ChatGptIcon className={styles["user-avtar"]} />;
+      return (
+        <div className={styles["provider-icon"]}>
+          <ChatGptIcon />
+        </div>
+      );
     }
     if (provider === "google") {
       return (
@@ -402,7 +406,9 @@ export function Chat(props: {
   const fontSize = useChatStore((state) => state.config.fontSize);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [userInput, setUserInput] = useState("");
+  const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { submitKey, shouldSubmit } = useSubmitHandler();
   const { scrollRef, setAutoScroll } = useScrollToBottom();
@@ -430,6 +436,52 @@ export function Chat(props: {
     setUserInput(prompt.content);
     setPromptHints([]);
     inputRef.current?.focus();
+  };
+
+  const resizeImageToJpeg = async (file: File) => {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? ""));
+      reader.onerror = () => reject(new Error("read file failed"));
+      reader.readAsDataURL(file);
+    });
+
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("load image failed"));
+      image.src = dataUrl;
+    });
+
+    const maxEdge = 800;
+    const scale =
+      Math.min(1, maxEdge / Math.max(img.width, img.height)) || 1;
+    const width = Math.max(1, Math.round(img.width * scale));
+    const height = Math.max(1, Math.round(img.height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("canvas unavailable");
+    }
+
+    ctx.drawImage(img, 0, 0, width, height);
+    return canvas.toDataURL("image/jpeg", 0.82);
+  };
+
+  const onPickImages = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const picked = Array.from(files).slice(0, 3);
+    try {
+      const converted = await Promise.all(picked.map(resizeImageToJpeg));
+      setPendingImages((prev) => prev.concat(converted));
+    } catch (error) {
+      showToast(Locale.Store.Error);
+      console.error("[Image Convert]", error);
+    }
   };
 
   const scrollInput = () => {
@@ -466,11 +518,17 @@ export function Chat(props: {
 
   // submit user input
   const onUserSubmit = () => {
-    if (userInput.length <= 0) return;
+    if (userInput.length <= 0 && pendingImages.length === 0) return;
     setIsLoading(true);
-    chatStore.onUserInput(userInput).then(() => setIsLoading(false));
+    chatStore
+      .onUserInput(userInput, pendingImages)
+      .then(() => setIsLoading(false));
     setUserInput("");
+    setPendingImages([]);
     setPromptHints([]);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
     if (!isMobile) inputRef.current?.focus();
     setAutoScroll(true);
   };
@@ -505,7 +563,7 @@ export function Chat(props: {
       if (messages[i].role === "user") {
         setIsLoading(true);
         chatStore
-          .onUserInput(messages[i].content)
+          .onUserInput(messages[i].content, messages[i].imageUrls)
           .then(() => setIsLoading(false));
         chatStore.updateCurrentSession((session) =>
           session.messages.splice(i, 2),
@@ -785,6 +843,18 @@ export function Chat(props: {
                     </div>
                   ) : (
                     <>
+                      {isUser && !!message.imageUrls?.length && (
+                        <div className={styles["chat-image-list"]}>
+                          {message.imageUrls.map((url, idx) => (
+                            <img
+                              src={url}
+                              key={message.id + "-img-" + idx}
+                              className={styles["chat-image-thumb"]}
+                              alt="user-upload"
+                            />
+                          ))}
+                        </div>
+                      )}
                       <div
                         className="markdown-body"
                         style={{ fontSize: `${fontSize}px` }}
@@ -838,7 +908,40 @@ export function Chat(props: {
 
       <div className={styles["chat-input-panel"]}>
         <PromptHints prompts={promptHints} onPromptSelect={onPromptSelect} />
+        {pendingImages.length > 0 && (
+          <div className={styles["chat-input-images"]}>
+            {pendingImages.map((url, i) => (
+              <div className={styles["chat-input-image-item"]} key={url + i}>
+                <img src={url} className={styles["chat-input-image-thumb"]} alt="pending-upload" />
+                <div
+                  className={styles["chat-input-image-remove"]}
+                  onClick={() =>
+                    setPendingImages((prev) => prev.filter((_, idx) => idx !== i))
+                  }
+                >
+                  ×
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         <div className={styles["chat-input-panel-inner"]}>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            multiple
+            className={styles["chat-image-input"]}
+            onChange={(e) => onPickImages(e.currentTarget.files)}
+          />
+          <IconButton
+            icon={<AddIcon />}
+            className={styles["chat-image-picker"]}
+            onClick={() => imageInputRef.current?.click()}
+            bordered
+            title={Locale.Chat.Actions.UploadImage}
+          />
           <TextareaAutosize
             ref={inputRef}
             className={styles["chat-input"]}

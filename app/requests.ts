@@ -16,10 +16,38 @@ const makeRequestParam = (
     stream?: boolean;
   },
 ): ChatRequest => {
-  let sendMessages = messages.map((v) => ({
-    role: v.role,
-    content: v.content,
-  }));
+  let sendMessages = messages.map((v) => {
+    if (v.role !== "user" || !v.imageUrls || v.imageUrls.length === 0) {
+      return {
+        role: v.role,
+        content: v.content ?? "",
+      };
+    }
+
+    const parts: Array<
+      | { type: "text"; text: string }
+      | { type: "image_url"; image_url: { url: string } }
+    > = [];
+
+    const text = (v.content ?? "").trim();
+    if (text.length > 0) {
+      parts.push({ type: "text", text });
+    }
+
+    for (const url of v.imageUrls) {
+      parts.push({
+        type: "image_url",
+        image_url: {
+          url,
+        },
+      });
+    }
+
+    return {
+      role: v.role,
+      content: parts,
+    };
+  });
 
   if (options?.filterBot) {
     sendMessages = sendMessages.filter((m) => m.role !== "assistant");

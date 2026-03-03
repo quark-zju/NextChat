@@ -23,6 +23,7 @@ const cn = {
       Copy: "复制",
       Stop: "停止",
       Retry: "重试",
+      UploadImage: "上传图片",
       ShowReasoning: "查看思考过程",
       HideReasoning: "收起思考过程",
     },

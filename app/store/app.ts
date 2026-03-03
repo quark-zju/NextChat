@@ -17,6 +17,7 @@ export type Message = ChatCompletionResponseMessage & {
   isError?: boolean;
   id?: number;
   model?: string;
+  imageUrls?: string[];
   reasoning?: string;
   reasoningVisible?: boolean;
   reasoningTranslated?: string;
@@ -202,7 +203,7 @@ interface ChatStore {
   newSession: () => void;
   currentSession: () => ChatSession;
   onNewMessage: (message: Message) => void;
-  onUserInput: (content: string) => Promise<void>;
+  onUserInput: (content: string, imageUrls?: string[]) => Promise<void>;
   summarizeSession: () => void;
   updateStat: (message: Message) => void;
   updateCurrentSession: (updater: (session: ChatSession) => void) => void;
@@ -222,7 +223,7 @@ interface ChatStore {
 }
 
 function countMessages(msgs: Message[]) {
-  return msgs.reduce((pre, cur) => pre + cur.content.length, 0);
+  return msgs.reduce((pre, cur) => pre + (cur.content?.length ?? 0), 0);
 }
 
 const LOCAL_KEY = "chat-next-web-store";
@@ -342,12 +343,13 @@ export const useChatStore = create<ChatStore>()(
         get().summarizeSession();
       },
 
-      async onUserInput(content) {
+      async onUserInput(content, imageUrls = []) {
         let modelConfig = useChatStore.getState().config.modelConfig;
 
         const userMessage: Message = createMessage({
           role: "user",
           content,
+          imageUrls,
         });
 
         const botMessage: Message = createMessage({
