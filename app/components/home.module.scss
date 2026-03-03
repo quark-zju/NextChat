@@ -312,6 +312,11 @@
   }
 }
 
+.chat-message-container-full {
+  max-width: 100%;
+  width: 100%;
+}
+
 .chat-message-user > .chat-message-container {
   align-items: flex-end;
 }

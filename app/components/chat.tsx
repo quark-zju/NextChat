@@ -892,7 +892,11 @@ export function Chat(props: {
                 isUser ? styles["chat-message-user"] : styles["chat-message"]
               }
             >
-              <div className={styles["chat-message-container"]}>
+              <div
+                className={`${styles["chat-message-container"]} ${
+                  isCompressedSummary ? styles["chat-message-container-full"] : ""
+                }`}
+              >
                 {!isCompressedSummary && (
                   <div className={styles["chat-message-avatar"]}>
                     <Avatar role={message.role} model={message.model} />
