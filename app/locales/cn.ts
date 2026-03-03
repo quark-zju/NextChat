@@ -9,9 +9,9 @@ const cn = {
     ChatItemCount: (count: number) => `${count} 条对话`,
   },
   Chat: {
-    SubTitle: (count: number) => {
+    SubTitle: (count: number, modelName?: string) => {
       if (count <= 5) {
-        return `与 ChatGPT 的对话`;
+        return `与 ${modelName || "ChatGPT"} 的对话`;
       } else {
         return `${count} 条对话`;
       }

@@ -638,6 +638,16 @@ export function Chat(props: {
   };
 
   const config = useChatStore((state) => state.config);
+  const currentModel =
+    session.messages
+      .slice()
+      .reverse()
+      .find((m) => m.model)?.model ?? config.modelConfig.model;
+  const headerModelName = getCompactModelName(currentModel);
+  const headerSubTitle = Locale.Chat.SubTitle(
+    session.messages.length,
+    headerModelName,
+  );
 
   const context: RenderMessage[] = session.context.slice();
 
@@ -709,7 +719,7 @@ export function Chat(props: {
             {session.topic}
           </div>
           <div className={styles["window-header-sub-title"]}>
-            {Locale.Chat.SubTitle(session.messages.length)}
+            {headerSubTitle}
           </div>
         </div>
         <div className={styles["window-actions"]}>
