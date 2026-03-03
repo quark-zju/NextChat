@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 import { type ChatCompletionResponseMessage } from "openai";
 import {
   ControllerPool,
+  INTERNAL_TASK_MODEL,
   requestChatStream,
   requestWithPrompt,
 } from "../requests";
@@ -526,7 +527,7 @@ export const useChatStore = create<ChatStore>()(
             }),
             {
               filterBot: false,
-              forceModel: "openai/gpt-4o-mini",
+              forceModel: INTERNAL_TASK_MODEL,
               onMessage(message, done) {
                 session.memoryPrompt = message;
                 if (done) {

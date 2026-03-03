@@ -3,7 +3,7 @@ import { Message, ModelConfig, useAccessStore, useChatStore } from "./store";
 import { showToast } from "./components/ui-lib";
 
 const TIME_OUT_MS = 30000;
-const INTERNAL_COMPACT_MODEL = "openai/gpt-4o-mini";
+export const INTERNAL_TASK_MODEL = "openai/gpt-4o-mini";
 type StreamEvent =
   | { type: "content"; text: string }
   | { type: "reasoning"; text: string }
@@ -300,7 +300,7 @@ export async function requestWithPrompt(messages: Message[], prompt: string) {
   ]);
 
   const res = await requestChat(messages, {
-    forceModel: INTERNAL_COMPACT_MODEL,
+    forceModel: INTERNAL_TASK_MODEL,
   });
 
   return res?.choices?.at(0)?.message?.content ?? "";
