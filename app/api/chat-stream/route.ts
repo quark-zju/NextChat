@@ -1,6 +1,14 @@
 import { createParser } from "eventsource-parser";
 import { NextRequest } from "next/server";
 import { requestOpenai } from "../common";
+import {
+  appendReplayRecord,
+  findReplayPayload,
+  getReplayMode,
+  parseReplayRequest,
+  type ReplayEvent,
+  type ReplayPayload,
+} from "../replay";
 
 const SERVER_REASONING_DEBUG = process.env.DEBUG_REASONING_STREAM === "1";
 
@@ -11,6 +19,69 @@ type StreamChunkEvent =
 
 function encodeEvent(encoder: TextEncoder, event: StreamChunkEvent) {
   return encoder.encode(`${JSON.stringify(event)}\n`);
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function createReplayStream(payload: ReplayPayload) {
+  const encoder = new TextEncoder();
+  const events =
+    Array.isArray(payload.events) && payload.events.length > 0
+      ? payload.events
+      : [
+          ...(payload.reasoning
+            ? [{ type: "reasoning", text: payload.reasoning, atMs: 0 }]
+            : []),
+          ...(payload.content
+            ? [{ type: "content", text: payload.content, atMs: 50 }]
+            : []),
+          { type: "done", atMs: 100 },
+        ];
+
+  return new ReadableStream({
+    async start(controller) {
+      let closed = false;
+      let lastAtMs = 0;
+
+      const safeClose = () => {
+        if (closed) return;
+        closed = true;
+        try {
+          controller.close();
+        } catch {}
+      };
+
+      for (const rawEvent of events) {
+        if (closed) return;
+        const event = rawEvent as ReplayEvent;
+        const atMs = Math.max(0, Math.floor(event.atMs ?? 0));
+        const delayMs = Math.min(5000, Math.max(0, atMs - lastAtMs));
+        lastAtMs = atMs;
+        if (delayMs > 0) {
+          await sleep(delayMs);
+        }
+
+        if (event.type === "content") {
+          controller.enqueue(
+            encodeEvent(encoder, { type: "content", text: event.text ?? "" }),
+          );
+        } else if (event.type === "reasoning") {
+          controller.enqueue(
+            encodeEvent(encoder, { type: "reasoning", text: event.text ?? "" }),
+          );
+        } else if (event.type === "done") {
+          controller.enqueue(encodeEvent(encoder, { type: "done" }));
+          safeClose();
+          return;
+        }
+      }
+
+      controller.enqueue(encodeEvent(encoder, { type: "done" }));
+      safeClose();
+    },
+  });
 }
 
 function extractText(value: unknown): string {
@@ -88,6 +159,49 @@ async function createStream(req: NextRequest) {
   const decoder = new TextDecoder();
   const streamStartedAt = Date.now();
   const traceId = Math.random().toString(36).slice(2, 10);
+  const replayMode = getReplayMode();
+  const replayRequest = await req
+    .clone()
+    .json()
+    .then((body) => parseReplayRequest(body))
+    .catch(() => null);
+
+  if (replayMode === "replay" && !replayRequest) {
+    return createReplayStream({
+      content: "[Replay error] 无法解析请求体，已阻止真实请求以避免消耗 token。",
+      reasoning: "",
+      events: [
+        {
+          type: "content",
+          text: "[Replay error] 无法解析请求体，已阻止真实请求以避免消耗 token。",
+          atMs: 0,
+        },
+        { type: "done", atMs: 50 },
+      ],
+    });
+  }
+
+  if (replayMode === "replay" && replayRequest) {
+    const payload = await findReplayPayload(replayRequest.key);
+    if (payload) {
+      console.log("[Replay] hit", replayRequest.key);
+      return createReplayStream(payload);
+    }
+    console.warn("[Replay] miss", replayRequest.key);
+    return createReplayStream({
+      content:
+        "[Replay miss] 未找到对应录制数据，请先切到 record 模式录制一次同样的请求。",
+      reasoning: "",
+      events: [
+        {
+          type: "content",
+          text: "[Replay miss] 未找到对应录制数据，请先切到 record 模式录制一次同样的请求。",
+          atMs: 0,
+        },
+        { type: "done", atMs: 60 },
+      ],
+    });
+  }
 
   const res = await requestOpenai(req);
 
@@ -97,6 +211,18 @@ async function createStream(req: NextRequest) {
       await res.text()
     ).replace(/provided:.*. You/, "provided: ***. You");
     console.log("[Stream] error ", content);
+
+    if (replayMode === "record" && replayRequest) {
+      await appendReplayRecord(replayRequest.key, replayRequest.request, {
+        content: "```json\n" + content + "```",
+        reasoning: "",
+        events: [
+          { type: "content", text: "```json\n" + content + "```", atMs: 0 },
+          { type: "done", atMs: 50 },
+        ],
+      });
+    }
+
     return "```json\n" + content + "```";
   }
 
@@ -109,11 +235,30 @@ async function createStream(req: NextRequest) {
       let reasoningDeltaCount = 0;
       let contentTotalLen = 0;
       let reasoningTotalLen = 0;
+      const replayEvents: ReplayEvent[] = [];
+      let replayContent = "";
+      let replayReasoning = "";
+
+      const recordReplayEvent = (event: StreamChunkEvent) => {
+        const atMs = Date.now() - streamStartedAt;
+        if (event.type === "content") {
+          replayContent += event.text;
+          replayEvents.push({ type: "content", text: event.text, atMs });
+        } else if (event.type === "reasoning") {
+          replayReasoning += event.text;
+          replayEvents.push({ type: "reasoning", text: event.text, atMs });
+        } else {
+          replayEvents.push({ type: "done", atMs });
+        }
+      };
 
       const safeEnqueue = (event: StreamChunkEvent) => {
         if (closed) return;
         try {
           controller.enqueue(encodeEvent(encoder, event));
+          if (replayMode === "record" && replayRequest) {
+            recordReplayEvent(event);
+          }
         } catch (error) {
           closed = true;
           if (SERVER_REASONING_DEBUG) {
@@ -257,6 +402,24 @@ async function createStream(req: NextRequest) {
           reasoningTotalLen,
         });
       }
+
+      if (replayMode === "record" && replayRequest) {
+        try {
+          const hasDone = replayEvents.some((event) => event.type === "done");
+          if (!hasDone) {
+            replayEvents.push({ type: "done", atMs: Date.now() - streamStartedAt });
+          }
+          await appendReplayRecord(replayRequest.key, replayRequest.request, {
+            content: replayContent,
+            reasoning: replayReasoning,
+            events: replayEvents,
+          });
+          console.log("[Replay] recorded", replayRequest.key, replayEvents.length);
+        } catch (error) {
+          console.error("[Replay] record failed", error);
+        }
+      }
+
       safeClose();
     },
   });
@@ -282,7 +445,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 // export const config = {
 //   runtime: "edge",
 // };
