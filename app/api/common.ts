@@ -21,7 +21,7 @@ function shouldUseOpenAI(path: string, model?: string) {
   return OPENAI_DIRECT_MODELS.has(model) || OPENAI_DIRECT_MODELS.has(normalized);
 }
 
-function getProviderConfig(path: string, model?: string) {
+export function getProviderConfig(path: string, model?: string) {
   const useOpenAI = shouldUseOpenAI(path, model);
   if (useOpenAI) {
     return {
