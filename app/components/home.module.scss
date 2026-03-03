@@ -394,6 +394,27 @@
   position: relative;
 }
 
+.chat-message-item-thinking {
+  background: transparent;
+  border: none;
+  padding: 2px 0;
+}
+
+.chat-thinking-inline {
+  border-left: 2px solid var(--primary);
+  padding-left: 10px;
+}
+
+.chat-thinking-inline-label {
+  font-size: 12px;
+  opacity: 0.72;
+  margin-bottom: 6px;
+}
+
+.chat-thinking-inline-content {
+  opacity: 0.92;
+}
+
 .chat-image-list {
   display: flex;
   flex-wrap: wrap;

@@ -995,6 +995,18 @@ export function Chat(props: {
           const hasReasoning = (message.reasoning?.trim().length ?? 0) > 0;
           const reasoningVisible = !!reasoningVisibility[getReasoningKey(message)];
           const isThinking = !isUser && !!message.streaming && !hasAssistantText;
+          const isReasoningOnlyStreaming =
+            !isUser &&
+            !!message.streaming &&
+            !hasAssistantText &&
+            hasReasoning &&
+            !isModelPicker &&
+            !isCompressedSummary;
+          const latestReasoningSegment = getLastReasoningSegment(
+            message.reasoning ?? "",
+          );
+          const thinkingPreview =
+            message.reasoningLiveTranslated?.trim() || latestReasoningSegment;
           const showLoadingOnly =
             (message.preview || (!hasAssistantText && !hasReasoning)) &&
             !isUser &&
@@ -1012,7 +1024,7 @@ export function Chat(props: {
                   isCompressedSummary ? styles["chat-message-container-full"] : ""
                 }`}
               >
-                {!isCompressedSummary && (
+                {!isCompressedSummary && !isReasoningOnlyStreaming && (
                   <div className={styles["chat-message-avatar"]}>
                     <Avatar role={message.role} model={message.model} />
                     {(message.preview || message.streaming) && (
@@ -1022,7 +1034,11 @@ export function Chat(props: {
                     )}
                   </div>
                 )}
-                <div className={styles["chat-message-item"]}>
+                <div
+                  className={`${styles["chat-message-item"]} ${
+                    isReasoningOnlyStreaming ? styles["chat-message-item-thinking"] : ""
+                  }`}
+                >
                   {!isUser &&
                     !isModelPicker &&
                     !isCompressedSummary &&
@@ -1052,7 +1068,19 @@ export function Chat(props: {
                         </div>
                       </div>
                     )}
-                  {showLoadingOnly ? (
+                  {isReasoningOnlyStreaming ? (
+                    <div className={styles["chat-thinking-inline"]}>
+                      <div className={styles["chat-thinking-inline-label"]}>
+                        {Locale.Chat.Thinking}
+                      </div>
+                      <div
+                        className={`${styles["chat-thinking-inline-content"]} markdown-body`}
+                        style={{ fontSize: `${fontSize}px` }}
+                      >
+                        <Markdown content={thinkingPreview} />
+                      </div>
+                    </div>
+                  ) : showLoadingOnly ? (
                     <LoadingIcon />
                   ) : isModelPicker ? (
                     <div className={styles["model-picker"]}>
@@ -1197,7 +1225,10 @@ export function Chat(props: {
                     </>
                   )}
                 </div>
-                {!isUser && !message.preview && !isCompressedSummary && (
+                {!isUser &&
+                  !message.preview &&
+                  !isCompressedSummary &&
+                  !isReasoningOnlyStreaming && (
                   <div className={styles["chat-message-actions"]}>
                     <div className={styles["chat-message-action-date"]}>
                       {renderModelName(message.model)}
