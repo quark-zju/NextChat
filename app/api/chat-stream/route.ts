@@ -2,10 +2,10 @@ import { createParser } from "eventsource-parser";
 import { NextRequest } from "next/server";
 import { requestOpenai } from "../common";
 import {
-  appendReplayRecord,
   findReplayPayload,
-  getReplayMode,
+  isReplayEnabled,
   parseReplayRequest,
+  saveReplayRecord,
   type ReplayEvent,
   type ReplayPayload,
 } from "../replay";
@@ -159,48 +159,20 @@ async function createStream(req: NextRequest) {
   const decoder = new TextDecoder();
   const streamStartedAt = Date.now();
   const traceId = Math.random().toString(36).slice(2, 10);
-  const replayMode = getReplayMode();
+  const replayEnabled = isReplayEnabled();
   const replayRequest = await req
     .clone()
     .json()
     .then((body) => parseReplayRequest(body))
     .catch(() => null);
 
-  if (replayMode === "replay" && !replayRequest) {
-    return createReplayStream({
-      content: "[Replay error] 无法解析请求体，已阻止真实请求以避免消耗 token。",
-      reasoning: "",
-      events: [
-        {
-          type: "content",
-          text: "[Replay error] 无法解析请求体，已阻止真实请求以避免消耗 token。",
-          atMs: 0,
-        },
-        { type: "done", atMs: 50 },
-      ],
-    });
-  }
-
-  if (replayMode === "replay" && replayRequest) {
+  if (replayEnabled && replayRequest) {
     const payload = await findReplayPayload(replayRequest.key);
     if (payload) {
       console.log("[Replay] hit", replayRequest.key);
       return createReplayStream(payload);
     }
-    console.warn("[Replay] miss", replayRequest.key);
-    return createReplayStream({
-      content:
-        "[Replay miss] 未找到对应录制数据，请先切到 record 模式录制一次同样的请求。",
-      reasoning: "",
-      events: [
-        {
-          type: "content",
-          text: "[Replay miss] 未找到对应录制数据，请先切到 record 模式录制一次同样的请求。",
-          atMs: 0,
-        },
-        { type: "done", atMs: 60 },
-      ],
-    });
+    console.log("[Replay] miss", replayRequest.key);
   }
 
   const res = await requestOpenai(req);
@@ -212,8 +184,8 @@ async function createStream(req: NextRequest) {
     ).replace(/provided:.*. You/, "provided: ***. You");
     console.log("[Stream] error ", content);
 
-    if (replayMode === "record" && replayRequest) {
-      await appendReplayRecord(replayRequest.key, replayRequest.request, {
+    if (replayEnabled && replayRequest) {
+      await saveReplayRecord(replayRequest.key, replayRequest.request, {
         content: "```json\n" + content + "```",
         reasoning: "",
         events: [
@@ -256,7 +228,7 @@ async function createStream(req: NextRequest) {
         if (closed) return;
         try {
           controller.enqueue(encodeEvent(encoder, event));
-          if (replayMode === "record" && replayRequest) {
+          if (replayEnabled && replayRequest) {
             recordReplayEvent(event);
           }
         } catch (error) {
@@ -403,13 +375,13 @@ async function createStream(req: NextRequest) {
         });
       }
 
-      if (replayMode === "record" && replayRequest) {
+      if (replayEnabled && replayRequest) {
         try {
           const hasDone = replayEvents.some((event) => event.type === "done");
           if (!hasDone) {
             replayEvents.push({ type: "done", atMs: Date.now() - streamStartedAt });
           }
-          await appendReplayRecord(replayRequest.key, replayRequest.request, {
+          await saveReplayRecord(replayRequest.key, replayRequest.request, {
             content: replayContent,
             reasoning: replayReasoning,
             events: replayEvents,

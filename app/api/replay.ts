@@ -1,9 +1,7 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, appendFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { ChatRequest } from "./openai/typing";
-
-export type ReplayMode = "off" | "record" | "replay";
 
 type ReplayRequest = {
   model: string;
@@ -34,22 +32,19 @@ type ReplayRecord = {
   payload: ReplayPayload;
 };
 
-const DEFAULT_REPLAY_FILE = "state/chat-replay.jsonl";
+const DEFAULT_REPLAY_DIR = "state/chat-replay";
 
-function normalizeMode(value: string | undefined): ReplayMode {
-  if (value === "off" || value === "record" || value === "replay") {
-    return value;
-  }
-  return process.env.NODE_ENV === "production" ? "off" : "record";
+export function isReplayEnabled() {
+  return process.env.NODE_ENV !== "production";
 }
 
-export function getReplayMode(): ReplayMode {
-  return normalizeMode(process.env.DEV_CHAT_REPLAY_MODE);
+function getReplayDirPath() {
+  const dir = process.env.DEV_CHAT_REPLAY_DIR?.trim() || DEFAULT_REPLAY_DIR;
+  return path.resolve(process.cwd(), dir);
 }
 
-export function getReplayFilePath() {
-  const file = process.env.DEV_CHAT_REPLAY_FILE?.trim() || DEFAULT_REPLAY_FILE;
-  return path.resolve(process.cwd(), file);
+function getReplayFilePath(key: string) {
+  return path.join(getReplayDirPath(), `${key}.json`);
 }
 
 function normalizeRequestBody(raw: unknown): ReplayRequest | null {
@@ -78,44 +73,39 @@ export function parseReplayRequest(raw: unknown) {
   const request = normalizeRequestBody(raw);
   if (!request) return null;
 
+  const keySource = {
+    model: request.model,
+    messages: request.messages,
+  };
+
   const key = createHash("sha256")
-    .update(JSON.stringify(request))
+    .update(JSON.stringify(keySource))
     .digest("hex");
 
   return { key, request };
 }
 
 export async function findReplayPayload(key: string) {
-  const filePath = getReplayFilePath();
-  let content = "";
+  const filePath = getReplayFilePath(key);
   try {
-    content = await readFile(filePath, "utf8");
+    const content = await readFile(filePath, "utf8");
+    const parsed = JSON.parse(content) as ReplayRecord;
+    if (parsed.key === key && parsed.payload) {
+      return parsed.payload;
+    }
+    return null;
   } catch (error: any) {
     if (error?.code === "ENOENT") return null;
     throw error;
   }
-
-  const lines = content.split("\n").filter((line) => line.trim().length > 0);
-  for (let i = lines.length - 1; i >= 0; i -= 1) {
-    try {
-      const parsed = JSON.parse(lines[i]) as ReplayRecord;
-      if (parsed.key === key && parsed.payload) {
-        return parsed.payload;
-      }
-    } catch {
-      // Ignore invalid lines to keep replay resilient.
-    }
-  }
-
-  return null;
 }
 
-export async function appendReplayRecord(
+export async function saveReplayRecord(
   key: string,
   request: ReplayRequest,
   payload: ReplayPayload,
 ) {
-  const filePath = getReplayFilePath();
+  const filePath = getReplayFilePath(key);
   await mkdir(path.dirname(filePath), { recursive: true });
 
   const record: ReplayRecord = {
@@ -126,5 +116,5 @@ export async function appendReplayRecord(
     payload,
   };
 
-  await appendFile(filePath, `${JSON.stringify(record)}\n`, "utf8");
+  await writeFile(filePath, `${JSON.stringify(record, null, 2)}\n`, "utf8");
 }
