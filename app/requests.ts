@@ -183,6 +183,7 @@ export async function requestChatStream(
     onController?: (controller: AbortController) => void;
   },
 ) {
+  const requestStartedAt = performance.now();
   const req = makeRequestParam(messages, {
     stream: true,
     filterBot: options?.filterBot,
@@ -206,6 +207,7 @@ export async function requestChatStream(
       body: JSON.stringify(req),
       signal: controller.signal,
     });
+    const responseReadyAt = performance.now();
     clearTimeout(reqTimeoutId);
 
     let responseText = "";
@@ -213,10 +215,22 @@ export async function requestChatStream(
     let pendingText = "";
     let sawContentEvent = false;
     let sawReasoningEvent = false;
+    let firstReasoningAt: number | null = null;
+    let firstContentAt: number | null = null;
 
     const finish = () => {
       if (DEV_REASONING_DEBUG) {
         console.log("[Reasoning Debug][client] stream finish", {
+          responseReadyMs: Math.round(responseReadyAt - requestStartedAt),
+          totalMs: Math.round(performance.now() - requestStartedAt),
+          firstReasoningMs:
+            firstReasoningAt == null
+              ? null
+              : Math.round(firstReasoningAt - requestStartedAt),
+          firstContentMs:
+            firstContentAt == null
+              ? null
+              : Math.round(firstContentAt - requestStartedAt),
           model: req.model,
           contentLen: responseText.length,
           reasoningLen: reasoningText.length,
@@ -259,8 +273,11 @@ export async function requestChatStream(
             if (event.type === "content") {
               responseText += event.text ?? "";
               sawContentEvent = true;
+              if (firstContentAt == null) firstContentAt = performance.now();
               if (DEV_REASONING_DEBUG && event.text?.length) {
                 console.log("[Reasoning Debug][client] content delta", {
+                  ts: Date.now(),
+                  elapsedMs: Math.round(performance.now() - requestStartedAt),
                   deltaLen: event.text.length,
                   totalLen: responseText.length,
                 });
@@ -269,8 +286,11 @@ export async function requestChatStream(
             } else if (event.type === "reasoning") {
               reasoningText += event.text ?? "";
               sawReasoningEvent = true;
+              if (firstReasoningAt == null) firstReasoningAt = performance.now();
               if (DEV_REASONING_DEBUG && event.text?.length) {
                 console.log("[Reasoning Debug][client] reasoning delta", {
+                  ts: Date.now(),
+                  elapsedMs: Math.round(performance.now() - requestStartedAt),
                   deltaLen: event.text.length,
                   totalLen: reasoningText.length,
                   preview: String(event.text).slice(0, 80),

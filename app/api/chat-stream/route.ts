@@ -149,6 +149,7 @@ async function createStream(req: NextRequest) {
                 json.choices[0].delta.reasoning_details.length > 0;
               if (content.length > 0 || reasoning.length > 0 || hasReasoningDetails) {
                 console.log("[Reasoning Debug][server]", {
+                  ts: Date.now(),
                   model,
                   contentLen: content.length,
                   reasoningLen: reasoning.length,
@@ -184,7 +185,14 @@ async function createStream(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const stream = await createStream(req);
-    return new Response(stream);
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
   } catch (error) {
     console.error("[Chat Stream]", error /*, error?.stack */);
     return new Response(
