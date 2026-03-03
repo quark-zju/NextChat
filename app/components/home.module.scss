@@ -268,7 +268,8 @@
 }
 
 .sidebar-action-active {
-  border: 2px solid var(--primary) !important;
+  outline: 2px solid var(--primary);
+  outline-offset: 0;
   box-shadow: var(--card-shadow);
 }
 
