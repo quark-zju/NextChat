@@ -2,7 +2,7 @@ import type { ChatRequest, ChatReponse } from "./api/openai/typing";
 import { Message, ModelConfig, useAccessStore, useChatStore } from "./store";
 import { showToast } from "./components/ui-lib";
 
-const TIME_OUT_MS = 30000;
+const TIME_OUT_MS = 60000;
 export const INTERNAL_TASK_MODEL = "openai/gpt-4o-mini";
 const DEV_REASONING_DEBUG = process.env.NODE_ENV !== "production";
 type StreamEvent =
