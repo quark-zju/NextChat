@@ -172,9 +172,14 @@
   right: -52px;
   transition: all ease 0.3s;
   opacity: 0;
-  font-size: 18px;
   line-height: 1;
   padding: 2px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+  }
 }
 
 .chat-item:hover > .chat-item-delete {
@@ -221,6 +226,12 @@
 
 .sidebar-action:not(:last-child) {
   margin-right: 15px;
+}
+
+.sidebar-action button svg {
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 
 .chat {
