@@ -46,3 +46,4 @@ public/prompts.json
 .vscode
 .idea
 certificates
+package-lock.json
