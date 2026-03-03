@@ -87,10 +87,6 @@ export const ALL_MODELS = [
     name: "openai/gpt-5",
     available: true,
   },
-  {
-    name: "openai/gpt-4o-mini",
-    available: true,
-  },
 ];
 
 export function limitNumber(
