@@ -143,6 +143,11 @@ function _Home() {
       >
         <div className={styles["sidebar-header"]}>
           <div className={styles["sidebar-title"]}>ChatNext</div>
+          {showArchived && (
+            <div className={styles["sidebar-sub-title"]}>
+              {Locale.Home.ArchivedChatList}
+            </div>
+          )}
         </div>
         <div
           className={styles["sidebar-body"]}
@@ -184,6 +189,7 @@ function _Home() {
                   setOpenSettings(false);
                 }}
                 shadow
+                className={showArchived ? styles["sidebar-action-active"] : ""}
                 title={
                   showArchived
                     ? Locale.Home.ViewActiveChats

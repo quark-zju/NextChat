@@ -108,7 +108,10 @@
 
 .sidebar-sub-title {
   font-size: 12px;
-  font-weight: 400px;
+  font-weight: 400;
+  margin-top: 6px;
+  color: var(--black);
+  opacity: 0.7;
 }
 
 .sidebar-body {
@@ -262,6 +265,11 @@
   width: 16px;
   height: 16px;
   display: block;
+}
+
+.sidebar-action-active {
+  border: 2px solid var(--primary) !important;
+  box-shadow: var(--card-shadow);
 }
 
 .chat {
