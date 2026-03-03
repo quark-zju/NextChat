@@ -1,7 +1,6 @@
 import { SubmitKey } from "../store/app";
-import type { LocaleType } from "./index";
 
-const tw: LocaleType = {
+const tw = {
   WIP: "該功能仍在開發中……",
   Error: {
     Unauthorized: "目前您的狀態是未授權，請前往設定頁面輸入授權碼。",

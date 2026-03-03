@@ -1,7 +1,6 @@
 import { SubmitKey } from "../store/app";
-import type { LocaleType } from "./index";
 
-const it: LocaleType = {
+const it = {
   WIP: "Work in progress...",
   Error: {
     Unauthorized:
