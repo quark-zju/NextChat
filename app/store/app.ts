@@ -121,7 +121,7 @@ export const ModalConfigValidator = {
     return limitModel(x);
   },
   max_tokens(x: number) {
-    return limitNumber(x, 0, 32000, 2000);
+    return limitNumber(x, 2000, 32000, 10000);
   },
   presence_penalty(x: number) {
     return limitNumber(x, -2, 2, 0);
@@ -147,7 +147,7 @@ const DEFAULT_CONFIG: ChatConfig = {
   modelConfig: {
     model: "google/gemini-3.1-pro-preview",
     temperature: 1,
-    max_tokens: 2000,
+    max_tokens: 10000,
     presence_penalty: 0,
   },
 };
@@ -645,7 +645,7 @@ export const useChatStore = create<ChatStore>()(
           countMessagesForCompression(toBeSummarizedMsgs);
 
         if (
-          historyMsgLength > (get()?.config?.modelConfig?.max_tokens ?? 4000)
+          historyMsgLength > 10000
         ) {
           const n = toBeSummarizedMsgs.length;
           toBeSummarizedMsgs = toBeSummarizedMsgs.slice(
