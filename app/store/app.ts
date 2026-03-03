@@ -19,6 +19,8 @@ export type Message = ChatCompletionResponseMessage & {
   model?: string;
   reasoning?: string;
   reasoningVisible?: boolean;
+  reasoningTranslated?: string;
+  reasoningTranslating?: boolean;
 };
 
 export function createMessage(override: Partial<Message>): Message {
@@ -354,6 +356,8 @@ export const useChatStore = create<ChatStore>()(
           model: modelConfig.model,
           reasoning: "",
           reasoningVisible: false,
+          reasoningTranslated: "",
+          reasoningTranslating: false,
         });
 
         // get recent messages

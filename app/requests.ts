@@ -272,6 +272,37 @@ export async function requestWithPrompt(messages: Message[], prompt: string) {
   return res?.choices?.at(0)?.message?.content ?? "";
 }
 
+export async function requestReasoningTranslation(
+  reasoning: string,
+  options?: {
+    targetLanguage?: string;
+    model?: string;
+  },
+) {
+  const res = await fetch("/api/reasoning-translate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(),
+    },
+    body: JSON.stringify({
+      reasoning,
+      targetLanguage: options?.targetLanguage ?? "zh-CN",
+      model: options?.model,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Translate failed: ${res.status}`);
+  }
+
+  return (await res.json()) as {
+    translated: string;
+    segments: Array<{ source: string; translated: string }>;
+    model: string;
+  };
+}
+
 // To store message streaming controller
 export const ControllerPool = {
   controllers: {} as Record<string, AbortController>,

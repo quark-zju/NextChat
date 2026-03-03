@@ -35,9 +35,9 @@ import {
 
 import dynamic from "next/dynamic";
 
-import { ControllerPool } from "../requests";
+import { ControllerPool, requestReasoningTranslation } from "../requests";
 import { Prompt, usePromptStore } from "../store/prompt";
-import Locale from "../locales";
+import Locale, { getLang } from "../locales";
 
 import { IconButton } from "./button";
 import styles from "./home.module.scss";
@@ -66,6 +66,12 @@ function getProviderByModel(model?: string) {
   if (provider === "google") return "google";
   if (provider === "anthropic") return "anthropic";
   return "default";
+}
+
+function isMostlyEnglish(text: string) {
+  const latinCount = (text.match(/[A-Za-z]/g) ?? []).length;
+  const cjkCount = (text.match(/[\u4e00-\u9fff]/g) ?? []).length;
+  return latinCount >= 40 && latinCount > cjkCount * 2;
 }
 
 export function Avatar(props: { role: Message["role"]; model?: string }) {
@@ -506,6 +512,39 @@ export function Chat(props: {
     });
   };
 
+  const onTranslateReasoning = async (message: Message) => {
+    if (!message.reasoning || message.reasoningTranslating) return;
+
+    chatStore.updateCurrentSession((session) => {
+      const target = session.messages.find((m) => m.id === message.id);
+      if (target) {
+        target.reasoningTranslating = true;
+      }
+    });
+
+    try {
+      const result = await requestReasoningTranslation(message.reasoning, {
+        targetLanguage: "zh-CN",
+      });
+      chatStore.updateCurrentSession((session) => {
+        const target = session.messages.find((m) => m.id === message.id);
+        if (target) {
+          target.reasoningTranslated = result.translated;
+        }
+      });
+    } catch (error) {
+      showToast(Locale.Store.Error);
+      console.error("[Reasoning Translate]", error);
+    } finally {
+      chatStore.updateCurrentSession((session) => {
+        const target = session.messages.find((m) => m.id === message.id);
+        if (target) {
+          target.reasoningTranslating = false;
+        }
+      });
+    }
+  };
+
   const config = useChatStore((state) => state.config);
 
   const context: RenderMessage[] = session.context.slice();
@@ -541,6 +580,24 @@ export function Chat(props: {
     inputRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (getLang() !== "cn") return;
+
+    const target = session.messages.find(
+      (m) =>
+        m.role === "assistant" &&
+        !m.streaming &&
+        !!m.reasoning &&
+        !m.reasoningTranslated &&
+        !m.reasoningTranslating &&
+        isMostlyEnglish(m.reasoning),
+    );
+
+    if (!target) return;
+    onTranslateReasoning(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.messages]);
 
   return (
     <div className={styles.chat} key={session.id}>
@@ -695,7 +752,11 @@ export function Chat(props: {
                             <div
                               className={styles["chat-message-reasoning-content"]}
                             >
-                              <Markdown content={message.reasoning} />
+                              <Markdown
+                                content={
+                                  message.reasoningTranslated || message.reasoning
+                                }
+                              />
                             </div>
                           )}
                         </div>
