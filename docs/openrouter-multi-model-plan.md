@@ -26,31 +26,30 @@
 
 ## 阶段 1（MVP）：接入 OpenRouter + 模型选择可用
 
-### 1) 环境变量与代理层
+### 1) 鉴权与代理层
 
 修改 `middleware.ts` + `app/api/common.ts`：
 
-- 新增环境变量：
-  - `LLM_PROVIDER=openai|openrouter`（默认 `openai`）
-  - `OPENROUTER_API_KEY`
-  - `OPENROUTER_BASE_URL=openrouter.ai/api`
-  - `OPENROUTER_HTTP_REFERER`（可选）
-  - `OPENROUTER_X_TITLE`（可选）
-- `middleware.ts` 按 provider 注入 `token`：
-  - `openai` -> `OPENAI_API_KEY`
-  - `openrouter` -> `OPENROUTER_API_KEY`
-- `app/api/common.ts` 按 provider 组装目标地址和 headers：
-  - OpenRouter 仍走 `POST /v1/chat/completions`
-  - 额外 headers：`HTTP-Referer`、`X-Title`（如配置）
+- `middleware.ts` 的 `matcher` 扩展到新增接口，确保统一走 `CODE` 校验。
+  - 当前：`/api/openai`、`/api/chat-stream`
+  - 增加：`/api/reasoning-translate`（以及后续内部接口）
+- 默认 provider 固定为 OpenRouter：
+  - key 来源：`OPENROUTER_API_KEY`
+  - base url 固定：`openrouter.ai/api`
+  - 可选 headers：`HTTP-Referer`、`X-Title`
+- 允许后端按模型名硬编码路由到 OpenAI（不新增 ENV）：
+  - 例如在 `app/api/common.ts` 维护 `OPENAI_DIRECT_MODELS` 集合
+  - 命中集合时：
+    - base url 切到 `api.openai.com`
+    - key 切到 `OPENAI_API_KEY`
+  - 未命中时继续走 OpenRouter
 
 ### 2) 模型配置方式
 
 修改 `app/store/app.ts` + `app/components/settings.tsx`：
 
-- 保留现有下拉，但模型列表改为“可配置来源”，避免每次改代码。
-- 新增环境变量：
-  - `MODEL_LIST=google/gemini-2.5-pro,anthropic/claude-sonnet-4,openai/gpt-5`
-- 启动时解析 `MODEL_LIST`，映射成 `ALL_MODELS`。
+- 保留现有下拉，模型列表直接在代码中维护（你可直接改代码，不依赖 ENV）。
+- 示例：在 `app/store/app.ts` 定义你实际要给家长开放的模型数组。
 - `limitModel` 改为“若不在列表则回退到第一个模型”。
 
 ### 3) 兼容参数处理
@@ -60,7 +59,7 @@
 - 删除当前强绑定 `gpt-4 -> gpt-4o`、`gpt-5 -> gpt-5.2-chat-latest` 的映射逻辑。
 - 仅保留通用字段（`temperature`、`max_tokens` 等），按 provider 做轻量参数兜底。
 
-> 结果：家长可以在前端选择 OpenRouter 上配置的模型，直接正常对话。
+> 结果：家长可选多模型，默认全走 OpenRouter；你可在后端代码中把少数模型定向走 OpenAI，以利用价格差。
 
 ## 阶段 2：思考过程展示（可选开关）
 
@@ -100,7 +99,7 @@
 
 ### 1) 翻译策略
 
-新增服务端接口（建议）：`/api/reasoning-translate`。
+新增服务端接口（建议）：`/api/reasoning-translate`，并纳入 `middleware.ts` 的 `matcher`，复用同一套权限校验。
 
 - 输入：reasoning 原文（长文本按段切分）。
 - 使用一个低成本模型翻译（例如 OpenRouter 上的 mini 模型）。
@@ -128,9 +127,9 @@
 
 ## 文件级改造清单（建议顺序）
 
-1. `middleware.ts`：provider 与 key 注入策略。
-2. `app/api/common.ts`：目标 base url + headers 适配。
-3. `app/store/app.ts`：模型列表来源、模型校验、message 新字段。
+1. `middleware.ts`：扩展 matcher，保证新增接口统一权限校验。
+2. `app/api/common.ts`：默认 OpenRouter + 按模型硬编码切 OpenAI。
+3. `app/store/app.ts`：代码内模型列表、模型校验、message 新字段。
 4. `app/components/settings.tsx`：模型下拉与开关设置项。
 5. `app/requests.ts`：请求参数通用化 + 流解析事件化。
 6. `app/api/chat-stream/route.ts`：SSE 字段扩展解析。
@@ -143,6 +142,8 @@
   - 规避：后端做“多字段兜底提取 + 能力探测”，前端只消费统一事件。
 - 模型参数不兼容：
   - 规避：按 provider/model 黑名单剔除不支持参数。
+- 路由策略随代码变更引发行为漂移：
+  - 规避：将“直连 OpenAI 模型集合”集中定义并加注释，改动时同步记录在变更说明。
 - 翻译成本上升：
   - 规避：仅用户展开时触发翻译，或仅翻译前 N 段。
 
