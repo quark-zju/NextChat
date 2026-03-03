@@ -242,10 +242,12 @@ export function Home() {
   const loading = !useHasHydrated();
 
   useCheckHash(accessStore);
-  const [showNotice, setShowNotice] = useState(
-    accessStore.accessCode.length === 0,
-  );
+  const [showNotice, setShowNotice] = useState(!accessStore.noticeAccepted);
   const [hostname, setHostname] = useState<string>("<loading>");
+
+  useEffect(() => {
+    setShowNotice(!accessStore.noticeAccepted);
+  }, [accessStore.noticeAccepted]);
 
   useLayoutEffect(() => {
     if (
@@ -283,7 +285,12 @@ export function Home() {
           contact admin <span className={styles["at"]}> </span>
           {hostname} <span className={styles["dot"]}> </span> net.
         </p>
-        <button onClick={() => setShowNotice(false)}>
+        <button
+          onClick={() => {
+            accessStore.acceptNotice();
+            setShowNotice(false);
+          }}
+        >
           I understand. I have an access code and trust the website
           administrator.
         </button>

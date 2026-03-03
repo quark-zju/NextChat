@@ -5,8 +5,10 @@ import { queryMeta } from "../utils";
 export interface AccessControlStore {
   accessCode: string;
   token: string;
+  noticeAccepted: boolean;
 
   updateCode: (_: string) => void;
+  acceptNotice: () => void;
   enabledAccessControl: () => boolean;
 }
 
@@ -17,16 +19,27 @@ export const useAccessStore = create<AccessControlStore>()(
     (set, get) => ({
       token: "",
       accessCode: "",
+      noticeAccepted: false,
       enabledAccessControl() {
         return true;
       },
       updateCode(code: string) {
         set((state) => ({ accessCode: code }));
       },
+      acceptNotice() {
+        set(() => ({ noticeAccepted: true }));
+      },
     }),
     {
       name: ACCESS_KEY,
-      version: 1,
+      version: 2,
+      migrate(persistedState, version) {
+        const state = persistedState as AccessControlStore;
+        if (version < 2) {
+          state.noticeAccepted = false;
+        }
+        return state;
+      },
     }
   )
 );
