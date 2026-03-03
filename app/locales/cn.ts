@@ -59,6 +59,10 @@ const cn = {
   Home: {
     NewChat: "新的聊天",
     DeleteChat: "确认删除选中的对话？",
+    ArchiveChat: "归档对话",
+    UnarchiveChat: "取消归档",
+    ViewArchivedChats: "查看归档对话",
+    ViewActiveChats: "查看进行中对话",
   },
   Settings: {
     Title: "设置",

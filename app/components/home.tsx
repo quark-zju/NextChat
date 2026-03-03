@@ -9,6 +9,7 @@ import styles from "./home.module.scss";
 
 import SettingsIcon from "../icons/settings.svg";
 import GithubIcon from "../icons/github.svg";
+import ArchiveIcon from "../icons/archive.svg";
 
 import BotIcon from "../icons/bot.svg";
 import AddIcon from "../icons/add.svg";
@@ -108,11 +109,13 @@ const useCheckHash = (accessStore: AccessControlStore) => {
 };
 
 function _Home() {
-  const [createNewSession, currentIndex, removeSession] = useChatStore(
+  const [createNewSession, currentIndex, removeSession, showArchived, toggleShowArchived] = useChatStore(
     (state) => [
       state.newSession,
       state.currentSessionIndex,
       state.removeSession,
+      state.showArchived,
+      state.toggleShowArchived,
     ],
   );
   const [showSideBar, setShowSideBar] = useState(true);
@@ -173,6 +176,21 @@ function _Home() {
                 shadow
               />
             </div>
+            <div className={styles["sidebar-action"]}>
+              <IconButton
+                icon={<ArchiveIcon />}
+                onClick={() => {
+                  toggleShowArchived();
+                  setOpenSettings(false);
+                }}
+                shadow
+                title={
+                  showArchived
+                    ? Locale.Home.ViewActiveChats
+                    : Locale.Home.ViewArchivedChats
+                }
+              />
+            </div>
             {null && (
               <div className={styles["sidebar-action"]}>
                 <a href={REPO_URL} target="_blank">
@@ -187,6 +205,9 @@ function _Home() {
               icon={<AddIcon />}
               text={Locale.Home.NewChat}
               onClick={() => {
+                if (showArchived) {
+                  toggleShowArchived();
+                }
                 createNewSession();
                 setShowSideBar(false);
               }}

@@ -154,6 +154,7 @@ export interface ChatStat {
 export interface ChatSession {
   id: number;
   topic: string;
+  archived: boolean;
   sendMemory: boolean;
   memoryPrompt: string;
   context: Message[];
@@ -175,6 +176,7 @@ function createEmptySession(): ChatSession {
   return {
     id: Date.now(),
     topic: DEFAULT_TOPIC,
+    archived: false,
     sendMemory: true,
     memoryPrompt: "",
     context: [],
@@ -193,8 +195,12 @@ interface ChatStore {
   config: ChatConfig;
   sessions: ChatSession[];
   currentSessionIndex: number;
+  showArchived: boolean;
   clearSessions: () => void;
   removeSession: (index: number) => void;
+  archiveSession: (index: number) => void;
+  unarchiveSession: (index: number) => void;
+  toggleShowArchived: () => void;
   moveSession: (from: number, to: number) => void;
   selectSession: (index: number) => void;
   newSession: () => void;
@@ -230,6 +236,7 @@ export const useChatStore = create<ChatStore>()(
     (set, get) => ({
       sessions: [createEmptySession()],
       currentSessionIndex: 0,
+      showArchived: false,
       config: {
         ...DEFAULT_CONFIG,
       },
@@ -238,6 +245,7 @@ export const useChatStore = create<ChatStore>()(
         set(() => ({
           sessions: [createEmptySession()],
           currentSessionIndex: 0,
+          showArchived: false,
         }));
       },
 
@@ -280,6 +288,94 @@ export const useChatStore = create<ChatStore>()(
           }
 
           return {
+            currentSessionIndex: nextIndex,
+            sessions,
+          };
+        });
+      },
+
+      archiveSession(index: number) {
+        set((state) => {
+          const sessions = state.sessions;
+          const session = sessions[index];
+          if (!session) return {};
+
+          session.archived = true;
+
+          let nextIndex = state.currentSessionIndex;
+          if (!state.showArchived && state.currentSessionIndex === index) {
+            const fallback = sessions.findIndex((s) => !s.archived);
+            if (fallback >= 0) {
+              nextIndex = fallback;
+            } else {
+              sessions.unshift(createEmptySession());
+              nextIndex = 0;
+            }
+          }
+
+          return {
+            sessions,
+            currentSessionIndex: nextIndex,
+          };
+        });
+      },
+
+      unarchiveSession(index: number) {
+        set((state) => {
+          const sessions = state.sessions;
+          const session = sessions[index];
+          if (!session) return {};
+
+          session.archived = false;
+
+          let nextIndex = state.currentSessionIndex;
+          if (state.showArchived && state.currentSessionIndex === index) {
+            const fallback = sessions.findIndex((s) => s.archived);
+            if (fallback >= 0) {
+              nextIndex = fallback;
+            } else {
+              const activeIndex = sessions.findIndex((s) => !s.archived);
+              if (activeIndex >= 0) {
+                nextIndex = activeIndex;
+              } else {
+                sessions.unshift(createEmptySession());
+                nextIndex = 0;
+              }
+            }
+          }
+
+          return {
+            sessions,
+            currentSessionIndex: nextIndex,
+          };
+        });
+      },
+
+      toggleShowArchived() {
+        set((state) => {
+          const showArchived = !state.showArchived;
+          let nextIndex = state.currentSessionIndex;
+          const sessions = state.sessions;
+
+          if (showArchived && !sessions[nextIndex]?.archived) {
+            const archivedIndex = sessions.findIndex((s) => s.archived);
+            if (archivedIndex >= 0) {
+              nextIndex = archivedIndex;
+            }
+          }
+
+          if (!showArchived && sessions[nextIndex]?.archived) {
+            const activeIndex = sessions.findIndex((s) => !s.archived);
+            if (activeIndex >= 0) {
+              nextIndex = activeIndex;
+            } else {
+              sessions.unshift(createEmptySession());
+              nextIndex = 0;
+            }
+          }
+
+          return {
+            showArchived,
             currentSessionIndex: nextIndex,
             sessions,
           };

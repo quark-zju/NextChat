@@ -53,6 +53,10 @@ const en: LocaleType = {
   Home: {
     NewChat: "New Chat",
     DeleteChat: "Confirm to delete the selected conversation?",
+    ArchiveChat: "Archive chat",
+    UnarchiveChat: "Unarchive chat",
+    ViewArchivedChats: "View archived chats",
+    ViewActiveChats: "View active chats",
   },
   Settings: {
     Title: "Settings",

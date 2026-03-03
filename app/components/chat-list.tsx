@@ -1,4 +1,5 @@
 import DeleteIcon from "../icons/delete.svg";
+import ArchiveIcon from "../icons/archive.svg";
 import styles from "./home.module.scss";
 import {
   DragDropContext,
@@ -15,6 +16,8 @@ import { isMobileScreen } from "../utils";
 export function ChatItem(props: {
   onClick?: () => void;
   onDelete?: () => void;
+  onArchive?: () => void;
+  archived?: boolean;
   title: string;
   count: number;
   time: string;
@@ -41,7 +44,23 @@ export function ChatItem(props: {
             </div>
             <div className={styles["chat-item-date"]}>{props.time}</div>
           </div>
-          <div className={styles["chat-item-delete"]} onClick={props.onDelete}>
+          <div
+            className={styles["chat-item-archive"]}
+            title={props.archived ? Locale.Home.UnarchiveChat : Locale.Home.ArchiveChat}
+            onClick={(e) => {
+              e.stopPropagation();
+              props.onArchive?.();
+            }}
+          >
+            <ArchiveIcon />
+          </div>
+          <div
+            className={styles["chat-item-delete"]}
+            onClick={(e) => {
+              e.stopPropagation();
+              props.onDelete?.();
+            }}
+          >
             <DeleteIcon />
           </div>
         </div>
@@ -51,14 +70,30 @@ export function ChatItem(props: {
 }
 
 export function ChatList() {
-  const [sessions, selectedIndex, selectSession, removeSession, moveSession] =
+  const [
+    sessions,
+    selectedIndex,
+    showArchived,
+    selectSession,
+    removeSession,
+    archiveSession,
+    unarchiveSession,
+    moveSession,
+  ] =
     useChatStore((state) => [
       state.sessions,
       state.currentSessionIndex,
+      state.showArchived,
       state.selectSession,
       state.removeSession,
+      state.archiveSession,
+      state.unarchiveSession,
       state.moveSession,
     ]);
+
+  const visibleSessions = sessions
+    .map((session, index) => ({ session, index }))
+    .filter(({ session }) => !!session.archived === showArchived);
 
   const onDragEnd: OnDragEndResponder = (result) => {
     const { destination, source } = result;
@@ -73,7 +108,10 @@ export function ChatList() {
       return;
     }
 
-    moveSession(source.index, destination.index);
+    const fromSession = visibleSessions[source.index];
+    const toSession = visibleSessions[destination.index];
+    if (!fromSession || !toSession) return;
+    moveSession(fromSession.index, toSession.index);
   };
 
   return (
@@ -85,7 +123,7 @@ export function ChatList() {
             ref={provided.innerRef}
             {...provided.droppableProps}
           >
-            {sessions.map((item, i) => (
+            {visibleSessions.map(({ session: item, index: sessionIndex }, i) => (
               <ChatItem
                 title={item.topic}
                 time={item.lastUpdate}
@@ -93,11 +131,17 @@ export function ChatList() {
                 key={item.id}
                 id={item.id}
                 index={i}
-                selected={i === selectedIndex}
-                onClick={() => selectSession(i)}
+                archived={!!item.archived}
+                selected={sessionIndex === selectedIndex}
+                onClick={() => selectSession(sessionIndex)}
+                onArchive={() =>
+                  item.archived
+                    ? unarchiveSession(sessionIndex)
+                    : archiveSession(sessionIndex)
+                }
                 onDelete={() =>
                   (!isMobileScreen() || confirm(Locale.Home.DeleteChat)) &&
-                  removeSession(i)
+                  removeSession(sessionIndex)
                 }
               />
             ))}
