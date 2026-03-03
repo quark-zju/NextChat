@@ -110,6 +110,11 @@ export async function requestChat(
   });
 
   const res = await requestOpenaiClient("v1/chat/completions")(req);
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    console.error("[Request Chat] failed", res.status, detail);
+    return;
+  }
 
   try {
     const response = (await res.json()) as ChatReponse;
@@ -291,7 +296,13 @@ export async function requestChatStream(
 }
 
 export async function requestWithPrompt(messages: Message[], prompt: string) {
-  messages = messages.concat([
+  const textOnlyMessages = messages.map((m) => ({
+    ...m,
+    imageUrls: undefined,
+    content: typeof m.content === "string" ? m.content : "",
+  }));
+
+  const promptMessages = textOnlyMessages.concat([
     {
       role: "user",
       content: prompt,
@@ -299,11 +310,12 @@ export async function requestWithPrompt(messages: Message[], prompt: string) {
     },
   ]);
 
-  const res = await requestChat(messages, {
+  const res = await requestChat(promptMessages, {
     forceModel: INTERNAL_TASK_MODEL,
   });
 
-  return res?.choices?.at(0)?.message?.content ?? "";
+  const content = res?.choices?.at(0)?.message?.content;
+  return typeof content === "string" ? content : "";
 }
 
 export async function requestReasoningTranslation(
