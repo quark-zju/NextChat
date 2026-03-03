@@ -2,6 +2,8 @@ import { createParser } from "eventsource-parser";
 import { NextRequest } from "next/server";
 import { requestOpenai } from "../common";
 
+const DEV_REASONING_DEBUG = process.env.NODE_ENV !== "production";
+
 type StreamChunkEvent =
   | { type: "content"; text: string }
   | { type: "reasoning"; text: string }
@@ -110,6 +112,22 @@ async function createStream(req: NextRequest) {
           try {
             const json = JSON.parse(data);
             const { content, reasoning } = extractDelta(json);
+            if (DEV_REASONING_DEBUG) {
+              const model = json?.model ?? "-";
+              const hasReasoningDetails =
+                Array.isArray(json?.choices?.[0]?.delta?.reasoning_details) &&
+                json.choices[0].delta.reasoning_details.length > 0;
+              if (content.length > 0 || reasoning.length > 0 || hasReasoningDetails) {
+                console.log("[Reasoning Debug][server]", {
+                  model,
+                  contentLen: content.length,
+                  reasoningLen: reasoning.length,
+                  hasReasoningDetails,
+                  finishReason: json?.choices?.[0]?.finish_reason ?? null,
+                  reasoningPreview: reasoning.slice(0, 100),
+                });
+              }
+            }
             if (content.length > 0) {
               controller.enqueue(
                 encodeEvent(encoder, { type: "content", text: content }),

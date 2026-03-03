@@ -4,6 +4,7 @@ import { showToast } from "./components/ui-lib";
 
 const TIME_OUT_MS = 30000;
 export const INTERNAL_TASK_MODEL = "openai/gpt-4o-mini";
+const DEV_REASONING_DEBUG = process.env.NODE_ENV !== "production";
 type StreamEvent =
   | { type: "content"; text: string }
   | { type: "reasoning"; text: string }
@@ -210,8 +211,20 @@ export async function requestChatStream(
     let responseText = "";
     let reasoningText = "";
     let pendingText = "";
+    let sawContentEvent = false;
+    let sawReasoningEvent = false;
 
     const finish = () => {
+      if (DEV_REASONING_DEBUG) {
+        console.log("[Reasoning Debug][client] stream finish", {
+          model: req.model,
+          contentLen: responseText.length,
+          reasoningLen: reasoningText.length,
+          sawContentEvent,
+          sawReasoningEvent,
+          reasoningPreview: reasoningText.slice(0, 100),
+        });
+      }
       options?.onMessage(responseText, true);
       options?.onReasoning?.(reasoningText, true);
       controller.abort();
@@ -245,9 +258,24 @@ export async function requestChatStream(
             const event = JSON.parse(rawLine) as StreamEvent;
             if (event.type === "content") {
               responseText += event.text ?? "";
+              sawContentEvent = true;
+              if (DEV_REASONING_DEBUG && event.text?.length) {
+                console.log("[Reasoning Debug][client] content delta", {
+                  deltaLen: event.text.length,
+                  totalLen: responseText.length,
+                });
+              }
               options?.onMessage(responseText, false);
             } else if (event.type === "reasoning") {
               reasoningText += event.text ?? "";
+              sawReasoningEvent = true;
+              if (DEV_REASONING_DEBUG && event.text?.length) {
+                console.log("[Reasoning Debug][client] reasoning delta", {
+                  deltaLen: event.text.length,
+                  totalLen: reasoningText.length,
+                  preview: String(event.text).slice(0, 80),
+                });
+              }
               options?.onReasoning?.(reasoningText, false);
             } else if (event.type === "done") {
               // handled by finish()

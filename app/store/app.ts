@@ -12,6 +12,8 @@ import { trimTopic } from "../utils";
 
 import Locale from "../locales";
 
+const DEV_REASONING_DEBUG = process.env.NODE_ENV !== "production";
+
 export type Message = ChatCompletionResponseMessage & {
   date: string;
   streaming?: boolean;
@@ -519,6 +521,17 @@ export const useChatStore = create<ChatStore>()(
             botMessage.reasoning = cleanedReasoning;
             if (!botMessage.content || botMessage.content.trim().length === 0) {
               botMessage.reasoningVisible = true;
+            }
+            if (DEV_REASONING_DEBUG) {
+              console.log("[Reasoning Debug][store] update", {
+                sessionIndex,
+                messageId: botMessage.id,
+                streaming: botMessage.streaming,
+                contentLen: botMessage.content?.length ?? 0,
+                reasoningLen: cleanedReasoning.length,
+                reasoningVisible: botMessage.reasoningVisible,
+                reasoningPreview: cleanedReasoning.slice(0, 100),
+              });
             }
             set(() => ({}));
           },
