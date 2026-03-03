@@ -821,7 +821,7 @@ export function Chat(props: {
         </div>
 
         <PromptToast
-          showToast={!hitBottom && false}
+          showToast={!hitBottom && !!session.memoryPrompt}
           showModal={showPromptModal}
           setShowModal={setShowPromptModal}
         />

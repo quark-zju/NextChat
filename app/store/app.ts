@@ -589,6 +589,7 @@ export const useChatStore = create<ChatStore>()(
 
       summarizeSession() {
         const session = get().currentSession();
+        const sessionId = session.id;
 
         // retry auto-title whenever new messages are added while topic
         // is still the default title.
@@ -649,11 +650,17 @@ export const useChatStore = create<ChatStore>()(
               filterBot: false,
               forceModel: INTERNAL_TASK_MODEL,
               onMessage(message, done) {
-                session.memoryPrompt = message;
-                if (done) {
-                  console.log("[Memory] ", session.memoryPrompt);
-                  session.lastSummarizeIndex = lastSummarizeIndex;
-                }
+                set(() => {
+                  const sessions = get().sessions;
+                  const targetSession = sessions.find((s) => s.id === sessionId);
+                  if (!targetSession) return {};
+                  targetSession.memoryPrompt = message;
+                  if (done) {
+                    targetSession.lastSummarizeIndex = lastSummarizeIndex;
+                    console.log("[Memory] ", targetSession.memoryPrompt);
+                  }
+                  return { sessions };
+                });
               },
               onError(error) {
                 console.error("[Summarize] ", error);
