@@ -394,24 +394,15 @@
   position: relative;
 }
 
-.chat-message-item-thinking {
-  background: transparent;
-  border: none;
-  padding: 2px 0;
-}
-
 .chat-thinking-inline {
+  margin-top: 10px;
+  margin-bottom: -2px;
   border-left: 2px solid var(--primary);
   padding-left: 10px;
 }
 
-.chat-thinking-inline-label {
-  font-size: 12px;
-  opacity: 0.72;
-  margin-bottom: 6px;
-}
-
 .chat-thinking-inline-content {
+  font-size: 13px;
   opacity: 0.92;
 }
 
