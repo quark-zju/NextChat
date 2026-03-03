@@ -657,9 +657,30 @@ export function Chat(props: {
     }
   };
 
-  const onToggleReasoning = (message: Message) => {
+  const findAssistantMessage = (
+    sessionMessages: Message[],
+    message: Message & { sourceIndex?: number },
+  ) => {
+    if (typeof message.sourceIndex === "number") {
+      const byIndex = sessionMessages[message.sourceIndex];
+      if (byIndex?.role === "assistant") return byIndex;
+    }
+
+    if (typeof message.id === "number") {
+      for (let i = sessionMessages.length - 1; i >= 0; i -= 1) {
+        const candidate = sessionMessages[i];
+        if (candidate.role === "assistant" && candidate.id === message.id) {
+          return candidate;
+        }
+      }
+    }
+
+    return undefined;
+  };
+
+  const onToggleReasoning = (message: Message & { sourceIndex?: number }) => {
     chatStore.updateCurrentSession((session) => {
-      const target = session.messages.find((m) => m.id === message.id);
+      const target = findAssistantMessage(session.messages, message);
       if (target) {
         target.reasoningVisible = !target.reasoningVisible;
       }
@@ -672,22 +693,23 @@ export function Chat(props: {
     });
   };
 
-  const onTranslateReasoning = async (message: Message) => {
-    if (!message.reasoning || message.reasoningTranslating) return;
+  const onTranslateReasoning = async (message: Message & { sourceIndex?: number }) => {
+    const reasoningText = message.reasoning?.trim();
+    if (!reasoningText || message.reasoningTranslating) return;
 
     chatStore.updateCurrentSession((session) => {
-      const target = session.messages.find((m) => m.id === message.id);
+      const target = findAssistantMessage(session.messages, message);
       if (target) {
         target.reasoningTranslating = true;
       }
     });
 
     try {
-      const result = await requestReasoningTranslation(message.reasoning, {
+      const result = await requestReasoningTranslation(reasoningText, {
         targetLanguage: "zh-CN",
       });
       chatStore.updateCurrentSession((session) => {
-        const target = session.messages.find((m) => m.id === message.id);
+        const target = findAssistantMessage(session.messages, message);
         if (target) {
           target.reasoningTranslated = result.translated;
         }
@@ -697,7 +719,7 @@ export function Chat(props: {
       console.error("[Reasoning Translate]", error);
     } finally {
       chatStore.updateCurrentSession((session) => {
-        const target = session.messages.find((m) => m.id === message.id);
+        const target = findAssistantMessage(session.messages, message);
         if (target) {
           target.reasoningTranslating = false;
         }
@@ -1044,7 +1066,7 @@ export function Chat(props: {
                       >
                         <Markdown content={message.content} />
                       </div>
-                      {!isUser && !!message.reasoning && (
+                      {!isUser && (message.reasoning?.trim().length ?? 0) > 0 && (
                         <div className={styles["chat-message-reasoning"]}>
                           <div
                             className={styles["chat-message-reasoning-toggle"]}

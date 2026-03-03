@@ -25,9 +25,11 @@ export type Message = ChatCompletionResponseMessage & {
   reasoningTranslating?: boolean;
 };
 
+let nextMessageId = Date.now();
+
 export function createMessage(override: Partial<Message>): Message {
   return {
-    id: Date.now(),
+    id: ++nextMessageId,
     date: new Date().toLocaleString(),
     role: "user",
     content: "",

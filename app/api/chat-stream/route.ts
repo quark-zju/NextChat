@@ -14,14 +14,21 @@ function encodeEvent(encoder: TextEncoder, event: StreamChunkEvent) {
 function extractText(value: unknown): string {
   if (typeof value === "string") return value;
   if (Array.isArray(value)) {
-    return value
-      .map((item) => {
-        if (typeof item === "string") return item;
-        if (!item || typeof item !== "object") return "";
-        const record = item as Record<string, unknown>;
-        const text = record.text ?? record.content ?? record.reasoning;
-        return typeof text === "string" ? text : "";
-      })
+    return value.map((item) => extractText(item)).join("");
+  }
+  if (value && typeof value === "object") {
+    const record = value as Record<string, any>;
+    return [
+      record.text,
+      record.content,
+      record.reasoning,
+      record.thinking,
+      record.reasoning_content,
+      record.reasoningText?.text,
+      record.summary,
+      record.data?.text,
+    ]
+      .map((item) => extractText(item))
       .join("");
   }
   return "";
