@@ -154,7 +154,7 @@ const cn = {
       Selected: (name: string) => `已切换到 ${name}`,
       Claude: "Anthropic 出品，更人性化、更耐心，适合沟通和表达润色",
       GPT: "OpenAI 出品，中立稳健、综合平衡，通用任务表现稳定",
-      Gemini: "Google 出品，理科和结构化分析更强，适合步骤推理与归纳",
+      Gemini: "Google 出品，理科、结构化分析和图片分析都更强，适合步骤推理与归纳",
     },
     Prompt: {
       History: (content: string) =>

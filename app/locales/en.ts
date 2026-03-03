@@ -151,7 +151,7 @@ const en: LocaleType = {
         "From Anthropic. More human and patient, great for communication and rewriting.",
       GPT: "From OpenAI. Neutral and steady, with balanced general-purpose performance.",
       Gemini:
-        "From Google. Strong in STEM and structured analysis, good for step-by-step reasoning.",
+        "From Google. Strong in STEM, structured analysis, and image understanding, good for step-by-step reasoning.",
     },
     Prompt: {
       History: (content: string) =>
