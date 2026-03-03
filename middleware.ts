@@ -3,7 +3,7 @@ import { ACCESS_CODES } from "./app/api/access";
 import md5 from "spark-md5";
 
 export const config = {
-  matcher: ["/api/openai", "/api/chat-stream"],
+  matcher: ["/api/:path*"],
 };
 
 export function middleware(req: NextRequest) {
@@ -16,22 +16,6 @@ export function middleware(req: NextRequest) {
         error: true,
         needAccessCode: true,
         msg: "Please go settings page and fill your access code.",
-      },
-      {
-        status: 401,
-      },
-    );
-  }
-
-  // inject api key
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (apiKey) {
-    req.headers.set("token", apiKey);
-  } else {
-    return NextResponse.json(
-      {
-        error: true,
-        msg: "Empty Api Key",
       },
       {
         status: 401,

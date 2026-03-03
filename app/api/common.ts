@@ -1,9 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const OPENAI_URL = "api.openai.com";
+const OPENAI_BASE_URL = "api.openai.com";
+const OPENROUTER_BASE_URL = "openrouter.ai/api";
 const DEFAULT_PROTOCOL = "https";
 const PROTOCOL = process.env.PROTOCOL ?? DEFAULT_PROTOCOL;
-const BASE_URL = process.env.BASE_URL ?? OPENAI_URL;
+
+// Keep this list small and explicit. Add models here when you want
+// direct OpenAI routing instead of default OpenRouter routing.
+const OPENAI_DIRECT_MODELS = new Set<string>([]);
+
+function shouldUseOpenAI(path: string, model?: string) {
+  if (path.startsWith("dashboard/")) return true;
+  if (!model) return false;
+  return OPENAI_DIRECT_MODELS.has(model);
+}
+
+function getProviderConfig(path: string, model?: string) {
+  const useOpenAI = shouldUseOpenAI(path, model);
+  if (useOpenAI) {
+    return {
+      baseUrl: OPENAI_BASE_URL,
+      apiKey: process.env.OPENAI_API_KEY,
+      headers: {},
+      provider: "openai",
+    };
+  }
+
+  return {
+    baseUrl: OPENROUTER_BASE_URL,
+    apiKey: process.env.OPENROUTER_API_KEY,
+    headers: {
+      ...(process.env.OPENROUTER_HTTP_REFERER
+        ? { "HTTP-Referer": process.env.OPENROUTER_HTTP_REFERER }
+        : {}),
+      ...(process.env.OPENROUTER_X_TITLE
+        ? { "X-Title": process.env.OPENROUTER_X_TITLE }
+        : {}),
+    },
+    provider: "openrouter",
+  };
+}
 
 export async function requestOpenai(req: NextRequest) {
   // Ask for usage information. Cannot check usage directly since
@@ -18,15 +54,41 @@ export async function requestOpenai(req: NextRequest) {
   //   throw new Error('No more usage available');
   // }
 
-  const apiKey = req.headers.get("token");
-  const openaiPath = req.headers.get("path");
+  const requestPath = req.headers.get("path") ?? "";
+  const requestModel = req.headers.get("x-chat-model") ?? undefined;
+  const config = getProviderConfig(requestPath, requestModel);
 
-  console.log("[Proxy] ", openaiPath);
+  if (!requestPath) {
+    return NextResponse.json(
+      {
+        error: true,
+        msg: "Empty request path",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
 
-  return fetch(`${PROTOCOL}://${BASE_URL}/${openaiPath}`, {
+  if (!config.apiKey) {
+    return NextResponse.json(
+      {
+        error: true,
+        msg: `Missing API key for ${config.provider}`,
+      },
+      {
+        status: 401,
+      },
+    );
+  }
+
+  console.log("[Proxy] ", requestPath, config.provider, requestModel ?? "-");
+
+  return fetch(`${PROTOCOL}://${config.baseUrl}/${requestPath}`, {
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${config.apiKey}`,
+      ...config.headers,
     },
     method: req.method,
     body: req.body,
