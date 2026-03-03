@@ -9,12 +9,23 @@ function sanitizeProxyHeaders(source: Headers) {
     "transfer-encoding",
     "connection",
     "keep-alive",
+    "set-cookie",
+    "server",
+    "alt-svc",
+    "strict-transport-security",
     "proxy-authenticate",
     "proxy-authorization",
     "te",
     "trailer",
     "upgrade",
   ];
+
+  for (const key of Array.from(headers.keys())) {
+    if (key.toLowerCase().startsWith("cf-")) {
+      headers.delete(key);
+    }
+  }
+
   for (const key of blocked) {
     headers.delete(key);
   }
