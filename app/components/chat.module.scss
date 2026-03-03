@@ -80,4 +80,67 @@
     font-size: 12px;
     user-select: text;
   }
+
+  .memory-prompt-compressed {
+    margin-top: 10px;
+  }
+
+  .memory-prompt-note {
+    font-size: 12px;
+    color: var(--black);
+    opacity: 0.8;
+    margin-bottom: 8px;
+  }
+
+  .memory-prompt-toggle {
+    border: var(--border-in-light);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--black);
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .memory-prompt-history {
+    margin-top: 10px;
+    border: var(--border-in-light);
+    border-radius: 8px;
+    background: var(--white);
+    max-height: 220px;
+    overflow: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .memory-prompt-history-empty {
+    font-size: 12px;
+    color: var(--black);
+    opacity: 0.7;
+  }
+
+  .memory-prompt-history-item {
+    border-bottom: var(--border-in-light);
+    padding-bottom: 8px;
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+  }
+
+  .memory-prompt-history-role {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+
+  .memory-prompt-history-content {
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    user-select: text;
+  }
 }

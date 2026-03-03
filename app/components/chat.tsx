@@ -195,6 +195,15 @@ function PromptToast(props: {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
   const context = session.context;
+  const [showCompressedMessages, setShowCompressedMessages] = useState(false);
+
+  const compressedEndIndex = Math.max(
+    0,
+    Math.min(session.lastSummarizeIndex, session.messages.length),
+  );
+  const compressedMessages = session.messages
+    .slice(0, compressedEndIndex)
+    .filter((m) => !m.isError);
 
   const addContextPrompt = (prompt: Message) => {
     chatStore.updateCurrentSession((session) => {
@@ -232,7 +241,10 @@ function PromptToast(props: {
         <div className="modal-mask">
           <Modal
             title={Locale.Context.Edit}
-            onClose={() => props.setShowModal(false)}
+            onClose={() => {
+              setShowCompressedMessages(false);
+              props.setShowModal(false);
+            }}
             actions={[
               <IconButton
                 key="reset"
@@ -336,6 +348,51 @@ function PromptToast(props: {
                 <div className={chatStyle["memory-prompt-content"]}>
                   {session.memoryPrompt || Locale.Memory.EmptyContent}
                 </div>
+                {compressedEndIndex > 0 && (
+                  <div className={chatStyle["memory-prompt-compressed"]}>
+                    <div className={chatStyle["memory-prompt-note"]}>
+                      {Locale.Memory.CompressedNotice}
+                    </div>
+                    <button
+                      type="button"
+                      className={chatStyle["memory-prompt-toggle"]}
+                      onClick={() =>
+                        setShowCompressedMessages(!showCompressedMessages)
+                      }
+                    >
+                      {showCompressedMessages
+                        ? Locale.Memory.CollapseCompressed
+                        : Locale.Memory.ExpandCompressed}
+                    </button>
+                    {showCompressedMessages && (
+                      <div className={chatStyle["memory-prompt-history"]}>
+                        {compressedMessages.length === 0 ? (
+                          <div className={chatStyle["memory-prompt-history-empty"]}>
+                            {Locale.Memory.EmptyCompressedHistory}
+                          </div>
+                        ) : (
+                          compressedMessages.map((m, i) => (
+                            <div
+                              key={`${m.id ?? i}-${m.date}`}
+                              className={chatStyle["memory-prompt-history-item"]}
+                            >
+                              <div className={chatStyle["memory-prompt-history-role"]}>
+                                {m.role === "user"
+                                  ? Locale.Export.MessageFromYou
+                                  : Locale.Export.MessageFromChatGPT}
+                              </div>
+                              <div
+                                className={chatStyle["memory-prompt-history-content"]}
+                              >
+                                {m.content}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           </Modal>

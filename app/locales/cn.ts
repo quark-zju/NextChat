@@ -51,6 +51,11 @@ const cn = {
   Memory: {
     Title: "上下文记忆",
     EmptyContent: "尚未记忆",
+    CompressedNotice:
+      "对话已压缩。AI 只能看到上面的压缩内容，看不到完整历史对话。",
+    ExpandCompressed: "展开对话",
+    CollapseCompressed: "收起对话",
+    EmptyCompressedHistory: "没有可展示的被压缩对话。",
     Send: "发送记忆",
     Copy: "复制记忆",
     Reset: "重置对话",

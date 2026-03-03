@@ -45,6 +45,11 @@ const en: LocaleType = {
   Memory: {
     Title: "Memory Prompt",
     EmptyContent: "Nothing yet.",
+    CompressedNotice:
+      "Conversation has been compressed. The AI can only see the compressed summary above, not the full original dialogue.",
+    ExpandCompressed: "Expand conversation",
+    CollapseCompressed: "Collapse conversation",
+    EmptyCompressedHistory: "No compressed conversation content to display.",
     Send: "Send Memory",
     Copy: "Copy Memory",
     Reset: "Reset Session",
