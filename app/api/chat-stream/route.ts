@@ -87,6 +87,7 @@ async function createStream(req: NextRequest) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
   const streamStartedAt = Date.now();
+  const traceId = Math.random().toString(36).slice(2, 10);
 
   const res = await requestOpenai(req);
 
@@ -103,6 +104,7 @@ async function createStream(req: NextRequest) {
     async start(controller) {
       let closed = false;
       let sawDone = false;
+      let eventIndex = 0;
       let contentDeltaCount = 0;
       let reasoningDeltaCount = 0;
       let contentTotalLen = 0;
@@ -143,6 +145,7 @@ async function createStream(req: NextRequest) {
           safeEnqueue({ type: "done" });
           if (DEV_REASONING_DEBUG) {
             console.log("[Reasoning Debug][server] done marker", {
+              traceId,
               ts: Date.now(),
               elapsedMs: Date.now() - streamStartedAt,
               contentDeltaCount,
@@ -157,6 +160,7 @@ async function createStream(req: NextRequest) {
 
         if (event.type === "event") {
           try {
+            eventIndex += 1;
             const json = JSON.parse(data);
             const { content, reasoning } = extractDelta(json);
             if (DEV_REASONING_DEBUG) {
@@ -179,6 +183,8 @@ async function createStream(req: NextRequest) {
                 usage
               ) {
                 console.log("[Reasoning Debug][server]", {
+                  traceId,
+                  eventIndex,
                   ts: Date.now(),
                   model,
                   contentLen: content.length,
@@ -187,6 +193,7 @@ async function createStream(req: NextRequest) {
                   finishReason,
                   usage,
                   deltaKeys,
+                  bodyPreview: data.slice(0, 500),
                   reasoningPreview: reasoning.slice(0, 100),
                 });
               }
@@ -202,7 +209,12 @@ async function createStream(req: NextRequest) {
               safeEnqueue({ type: "reasoning", text: reasoning });
             }
           } catch (e) {
-            console.error("[Stream Parse]", e, String(data).slice(0, 160));
+            console.error("[Stream Parse]", {
+              traceId,
+              eventIndex,
+              error: e,
+              bodyPreview: String(data).slice(0, 500),
+            });
           }
         }
       }
@@ -228,6 +240,7 @@ async function createStream(req: NextRequest) {
           console.error("[Stream Body]", error);
         } else if (DEV_REASONING_DEBUG) {
           console.warn("[Reasoning Debug][server] upstream aborted", {
+            traceId,
             code,
             name,
           });
@@ -235,6 +248,7 @@ async function createStream(req: NextRequest) {
       }
       if (!sawDone && DEV_REASONING_DEBUG) {
         console.warn("[Reasoning Debug][server] stream ended without [DONE]", {
+          traceId,
           ts: Date.now(),
           elapsedMs: Date.now() - streamStartedAt,
           contentDeltaCount,
