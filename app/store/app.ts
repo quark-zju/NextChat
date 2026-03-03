@@ -23,6 +23,9 @@ export type Message = ChatCompletionResponseMessage & {
   reasoningVisible?: boolean;
   reasoningTranslated?: string;
   reasoningTranslating?: boolean;
+  reasoningLiveTranslated?: string;
+  reasoningLiveTranslating?: boolean;
+  reasoningLiveSource?: string;
 };
 
 let nextMessageId = Date.now();
@@ -474,6 +477,9 @@ export const useChatStore = create<ChatStore>()(
           reasoningVisible: false,
           reasoningTranslated: "",
           reasoningTranslating: false,
+          reasoningLiveTranslated: "",
+          reasoningLiveTranslating: false,
+          reasoningLiveSource: "",
         });
 
         // get recent messages
@@ -507,7 +513,13 @@ export const useChatStore = create<ChatStore>()(
             }
           },
           onReasoning(reasoning) {
-            botMessage.reasoning = reasoning;
+            const cleanedReasoning = reasoning
+              .replace(/\n{3,}/g, "\n\n")
+              .trim();
+            botMessage.reasoning = cleanedReasoning;
+            if (!botMessage.content || botMessage.content.trim().length === 0) {
+              botMessage.reasoningVisible = true;
+            }
             set(() => ({}));
           },
           onError(error, statusCode) {

@@ -76,6 +76,18 @@ function isMostlyEnglish(text: string) {
   return latinCount >= 40 && latinCount > cjkCount * 2;
 }
 
+function getLastReasoningSegment(text: string) {
+  const normalized = text.replace(/\n{3,}/g, "\n\n").trim();
+  if (!normalized) return "";
+  const parts = normalized
+    .split(/\n\s*\n/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const segment = parts.at(-1) ?? normalized;
+  if (segment.length <= 500) return segment;
+  return segment.slice(-500);
+}
+
 function getCompactModelName(model?: string) {
   if (!model || model.length === 0) return "";
   const rawName = model.includes("/") ? model.split("/").at(-1) ?? model : model;
@@ -727,6 +739,55 @@ export function Chat(props: {
     }
   };
 
+  const onTranslateLiveReasoningSegment = async (
+    message: Message & { sourceIndex?: number },
+  ) => {
+    const fullReasoning = message.reasoning?.trim() ?? "";
+    if (!fullReasoning || !message.streaming || !isMostlyEnglish(fullReasoning)) {
+      return;
+    }
+
+    const segment = getLastReasoningSegment(fullReasoning);
+    if (!segment) return;
+
+    const sessionMessage = session.messages[message.sourceIndex ?? -1];
+    if (
+      sessionMessage?.reasoningLiveTranslating ||
+      sessionMessage?.reasoningLiveSource === segment
+    ) {
+      return;
+    }
+
+    chatStore.updateCurrentSession((session) => {
+      const target = findAssistantMessage(session.messages, message);
+      if (!target) return;
+      if (target.reasoningLiveSource === segment) return;
+      target.reasoningLiveTranslating = true;
+      target.reasoningLiveSource = segment;
+    });
+
+    try {
+      const result = await requestReasoningTranslation(segment, {
+        targetLanguage: "zh-CN",
+      });
+      chatStore.updateCurrentSession((session) => {
+        const target = findAssistantMessage(session.messages, message);
+        if (!target) return;
+        if (target.reasoningLiveSource !== segment) return;
+        target.reasoningLiveTranslated = result.translated.trim();
+      });
+    } catch (error) {
+      console.error("[Reasoning Live Translate]", error);
+    } finally {
+      chatStore.updateCurrentSession((session) => {
+        const target = findAssistantMessage(session.messages, message);
+        if (!target) return;
+        if (target.reasoningLiveSource !== segment) return;
+        target.reasoningLiveTranslating = false;
+      });
+    }
+  };
+
   const config = useChatStore((state) => state.config);
   const currentModel =
     session.messages
@@ -820,6 +881,23 @@ export function Chat(props: {
 
     if (!target) return;
     onTranslateReasoning(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.messages]);
+
+  useEffect(() => {
+    if (getLang() !== "cn") return;
+
+    const targetIndex = session.messages.findIndex(
+      (m) =>
+        m.role === "assistant" &&
+        !!m.streaming &&
+        !!m.reasoning &&
+        isMostlyEnglish(m.reasoning),
+    );
+
+    if (targetIndex < 0) return;
+    const target = session.messages[targetIndex];
+    onTranslateLiveReasoningSegment({ ...target, sourceIndex: targetIndex });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.messages]);
 
@@ -1083,6 +1161,18 @@ export function Chat(props: {
                             <div
                               className={styles["chat-message-reasoning-content"]}
                             >
+                              {!!message.streaming &&
+                                !!message.reasoningLiveTranslated && (
+                                  <div
+                                    style={{
+                                      marginBottom: "8px",
+                                      paddingBottom: "8px",
+                                      borderBottom: "var(--border-in-light)",
+                                    }}
+                                  >
+                                    <Markdown content={message.reasoningLiveTranslated} />
+                                  </div>
+                                )}
                               <Markdown
                                 content={
                                   message.reasoningTranslated || message.reasoning

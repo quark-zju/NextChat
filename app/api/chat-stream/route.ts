@@ -12,7 +12,7 @@ function encodeEvent(encoder: TextEncoder, event: StreamChunkEvent) {
 }
 
 function extractText(value: unknown): string {
-  if (typeof value === "string") return value;
+  if (typeof value === "string") return value.replace(/\\n/g, "\n");
   if (Array.isArray(value)) {
     return value.map((item) => extractText(item)).join("");
   }
@@ -38,6 +38,7 @@ function extractDelta(json: Record<string, any>) {
   const delta = json?.choices?.[0]?.delta ?? {};
   let content = "";
   let reasoning = "";
+  let hasReasoningInContent = false;
 
   const rawContent = delta?.content;
   if (Array.isArray(rawContent)) {
@@ -52,6 +53,7 @@ function extractDelta(json: Record<string, any>) {
         partType.includes("summary")
       ) {
         reasoning += text;
+        hasReasoningInContent = true;
       } else {
         content += text;
       }
@@ -60,10 +62,21 @@ function extractDelta(json: Record<string, any>) {
     content += extractText(rawContent);
   }
 
-  reasoning += extractText(delta?.reasoning);
-  reasoning += extractText(delta?.thinking);
-  reasoning += extractText(delta?.reasoning_content);
-  reasoning += extractText(delta?.reasoning_details);
+  const reasoningDirect =
+    extractText(delta?.reasoning) ||
+    extractText(delta?.thinking) ||
+    extractText(delta?.reasoning_content);
+
+  // OpenRouter (e.g. Gemini) may provide both reasoning and reasoning_details
+  // in nearby chunks; prefer direct reasoning tokens to avoid duplicated text.
+  if (!hasReasoningInContent && reasoningDirect.length > 0) {
+    reasoning += reasoningDirect;
+  } else if (!hasReasoningInContent) {
+    reasoning += extractText(delta?.reasoning_details);
+  }
+
+  content = content.replace(/\n{3,}/g, "\n\n");
+  reasoning = reasoning.replace(/\n{3,}/g, "\n\n");
 
   return { content, reasoning };
 }
