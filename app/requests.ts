@@ -10,6 +10,13 @@ type StreamEvent =
   | { type: "reasoning"; text: string }
   | { type: "done" };
 
+function getGeminiReasoningConfig(model?: string) {
+  if (typeof model === "string" && model.startsWith("google/gemini-")) {
+    return { effort: "medium" as const, max_tokens: 8000 };
+  }
+  return undefined;
+}
+
 const makeRequestParam = (
   messages: Message[],
   options?: {
@@ -61,11 +68,13 @@ const makeRequestParam = (
   }
 
   // console.log("[Request Param] ", modelConfig);
+  const reasoning = getGeminiReasoningConfig(modelConfig.model);
 
   return {
     messages: sendMessages,
     stream: options?.stream,
     ...modelConfig,
+    ...(reasoning ? { reasoning } : {}),
   };
 };
 
