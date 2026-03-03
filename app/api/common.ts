@@ -94,6 +94,30 @@ export async function requestOpenai(req: NextRequest) {
 
   console.log("[Proxy] ", requestPath, config.provider, requestModel ?? "-");
 
+  let requestBody: BodyInit | null | undefined = req.body;
+  if (
+    config.provider === "openai" &&
+    req.method !== "GET" &&
+    req.method !== "HEAD"
+  ) {
+    try {
+      const json = await req.json();
+      if (
+        json &&
+        typeof json === "object" &&
+        typeof (json as { model?: unknown }).model === "string"
+      ) {
+        const model = (json as { model: string }).model;
+        if (model.startsWith("openai/")) {
+          (json as { model: string }).model = model.slice("openai/".length);
+        }
+      }
+      requestBody = JSON.stringify(json);
+    } catch (error) {
+      console.warn("[Proxy] failed to normalize OpenAI model name", error);
+    }
+  }
+
   return fetch(`${PROTOCOL}://${config.baseUrl}/${requestPath}`, {
     headers: {
       "Content-Type": "application/json",
@@ -101,7 +125,7 @@ export async function requestOpenai(req: NextRequest) {
       ...config.headers,
     },
     method: req.method,
-    body: req.body,
+    body: requestBody,
     duplex: "half",
   } as RequestInit);
 }
