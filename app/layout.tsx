@@ -20,10 +20,10 @@ try {
 */
 
 export const metadata = {
-  title: "ChatNext",
+  title: "NextChat",
   description: "Your personal Chat Bot.",
   appleWebApp: {
-    title: "ChatNext",
+    title: "NextChat",
     statusBarStyle: "default",
   },
   themeColor: "#fafafa",
