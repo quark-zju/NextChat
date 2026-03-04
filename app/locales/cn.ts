@@ -166,11 +166,11 @@ const cn = {
     StorageFull: "本地存储已满，新的聊天可能无法保存。请立即导出数据并清理历史。",
     ModelPicker: {
       Title: "先选一个模型开始聊天",
-      SubTitle: "不同模型风格不同，请选择：",
+      SubTitle: "不同模型能力和风格不同，请选择：",
       Selected: (name: string) => `已切换到 ${name}`,
       Claude: "Anthropic 出品，偏人性化，适合沟通和表达润色",
       GPT: "OpenAI 出品，中立稳健，通用任务表现稳定",
-      Gemini: "Google 出品，偏理科，图片分析也很强，适合步骤推理与归纳",
+      Gemini: "Google 出品，擅长理科和视觉分析",
     },
     Prompt: {
       History: (content: string) =>
