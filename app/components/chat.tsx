@@ -169,105 +169,103 @@ function downloadDataUrl(dataUrl: string, filename: string) {
   document.body.removeChild(element);
 }
 
-function wrapLineByWidth(
-  ctx: CanvasRenderingContext2D,
-  line: string,
-  maxWidth: number,
-) {
-  if (ctx.measureText(line).width <= maxWidth) {
-    return [line];
-  }
-
-  const wrapped: string[] = [];
-  let current = "";
-  for (const ch of line) {
-    const candidate = current + ch;
-    if (ctx.measureText(candidate).width <= maxWidth) {
-      current = candidate;
-      continue;
-    }
-
-    if (current.length > 0) {
-      wrapped.push(current);
-    }
-    current = ch;
-  }
-
-  if (current.length > 0) {
-    wrapped.push(current);
-  }
-
-  return wrapped;
+function collectCssText() {
+  let cssText = "";
+  Array.from(document.styleSheets).forEach((sheet) => {
+    try {
+      const rules = Array.from((sheet as CSSStyleSheet).cssRules);
+      rules.forEach((rule) => {
+        cssText += `${rule.cssText}\n`;
+      });
+    } catch {}
+  });
+  return cssText;
 }
 
-function buildScreenshotPages(text: string) {
-  const lines: string[] = [];
-  const canvasWidth = 1400;
-  const horizontalPadding = 48;
-  const verticalPadding = 56;
-  const lineHeight = 34;
-  const maxCanvasHeight = 14000;
-  const maxTextWidth = canvasWidth - horizontalPadding * 2;
+async function renderNodeSliceToPng(
+  node: HTMLElement,
+  cssText: string,
+  width: number,
+  offsetY: number,
+  height: number,
+) {
+  const wrapper = document.createElement("div");
+  wrapper.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+  wrapper.style.width = `${width}px`;
+  wrapper.style.height = `${height}px`;
+  wrapper.style.overflow = "hidden";
+  wrapper.style.background = getComputedStyle(document.body).backgroundColor;
 
-  const tempCanvas = document.createElement("canvas");
-  const tempCtx = tempCanvas.getContext("2d");
-  if (!tempCtx) {
-    return [];
+  const cloned = node.cloneNode(true) as HTMLElement;
+  cloned.style.margin = "0";
+  cloned.style.width = `${width}px`;
+  cloned.style.transform = `translateY(-${offsetY}px)`;
+  cloned.style.transformOrigin = "top left";
+  wrapper.appendChild(cloned);
+
+  const wrapperHtml = new XMLSerializer().serializeToString(wrapper);
+  const safeCss = cssText.replace(/<\/style>/g, "");
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <foreignObject x="0" y="0" width="100%" height="100%">
+        <style>${safeCss}</style>
+        ${wrapperHtml}
+      </foreignObject>
+    </svg>
+  `;
+
+  const image = new Image();
+  image.decoding = "async";
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
+  await new Promise<void>((resolve, reject) => {
+    image.onload = () => resolve();
+    image.onerror = () => reject(new Error("Failed to load screenshot"));
+  });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("No canvas context");
   }
 
-  tempCtx.font = '500 24px "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
+  ctx.drawImage(image, 0, 0);
+  return canvas.toDataURL("image/png");
+}
 
-  text
-    .replace(/\r/g, "")
-    .split("\n")
-    .forEach((line) => {
-      if (line.length === 0) {
-        lines.push("");
-        return;
-      }
-      const wrapped = wrapLineByWidth(tempCtx, line, maxTextWidth);
-      lines.push(...wrapped);
-    });
-
-  const usableHeight = maxCanvasHeight - verticalPadding * 2;
-  const linesPerPage = Math.max(1, Math.floor(usableHeight / lineHeight));
-  const pageCount = Math.max(1, Math.ceil(lines.length / linesPerPage));
+async function buildBubbleScreenshotPages(node: HTMLElement) {
+  const width = Math.ceil(node.getBoundingClientRect().width);
+  const totalHeight = Math.max(node.scrollHeight, node.clientHeight);
+  const maxSliceHeight = 3200;
+  const cssText = collectCssText();
   const pages: string[] = [];
 
-  for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
-    const pageLines = lines.slice(
-      pageIndex * linesPerPage,
-      (pageIndex + 1) * linesPerPage,
+  if (width <= 0 || totalHeight <= 0) {
+    return pages;
+  }
+
+  for (let offsetY = 0; offsetY < totalHeight; offsetY += maxSliceHeight) {
+    const sliceHeight = Math.min(maxSliceHeight, totalHeight - offsetY);
+    const page = await renderNodeSliceToPng(
+      node,
+      cssText,
+      width,
+      offsetY,
+      sliceHeight,
     );
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) continue;
-
-    canvas.width = canvasWidth;
-    canvas.height = Math.max(
-      verticalPadding * 2 + pageLines.length * lineHeight,
-      280,
-    );
-
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#111111";
-    ctx.font =
-      '500 24px "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
-    ctx.textBaseline = "top";
-
-    pageLines.forEach((line, index) => {
-      const y = verticalPadding + index * lineHeight;
-      ctx.fillText(line, horizontalPadding, y);
-    });
-
-    pages.push(canvas.toDataURL("image/png"));
+    pages.push(page);
   }
 
   return pages;
 }
 
-function exportMessages(messages: Message[], topic: string) {
+function exportMessages(
+  messages: Message[],
+  topic: string,
+  screenshotNode?: HTMLElement | null,
+) {
   const textContent =
     `${topic}\n\n` +
     messages
@@ -283,7 +281,8 @@ function exportMessages(messages: Message[], topic: string) {
 
   const textFilename = `${topic}.txt`;
 
-  showModal({
+  let closeModal = () => {};
+  closeModal = showModal({
     title: Locale.Export.Title,
     actions: [
       <IconButton
@@ -291,7 +290,11 @@ function exportMessages(messages: Message[], topic: string) {
         icon={<CopyIcon />}
         bordered
         text={Locale.Export.Copy}
-        onClick={() => copyToClipboard(textContent)}
+        onClick={() => {
+          copyToClipboard(textContent);
+          closeModal();
+          showToast(Locale.Copy.Success);
+        }}
       />,
       <IconButton
         key="download"
@@ -305,20 +308,29 @@ function exportMessages(messages: Message[], topic: string) {
         icon={<CameraIcon />}
         bordered
         text={Locale.Export.Screenshot}
-        onClick={() => {
-          const pages = buildScreenshotPages(textContent);
-          if (pages.length === 0) {
+        onClick={async () => {
+          if (!screenshotNode) {
             showToast(Locale.Export.ScreenshotFailed);
             return;
           }
-          if (pages.length === 1) {
-            downloadDataUrl(pages[0], `${topic}.png`);
-            return;
+
+          try {
+            const pages = await buildBubbleScreenshotPages(screenshotNode);
+            if (pages.length === 0) {
+              showToast(Locale.Export.ScreenshotFailed);
+              return;
+            }
+            if (pages.length === 1) {
+              downloadDataUrl(pages[0], `${topic}.png`);
+              return;
+            }
+            pages.forEach((page, index) => {
+              downloadDataUrl(page, `${topic}-part-${index + 1}.png`);
+            });
+            showToast(Locale.Export.ScreenshotMulti(pages.length));
+          } catch {
+            showToast(Locale.Export.ScreenshotFailed);
           }
-          pages.forEach((page, index) => {
-            downloadDataUrl(page, `${topic}-part-${index + 1}.png`);
-          });
-          showToast(Locale.Export.ScreenshotMulti(pages.length));
         }}
       />,
     ],
@@ -637,6 +649,7 @@ export function Chat(props: {
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const exportCaptureRef = useRef<HTMLDivElement>(null);
   const [userInput, setUserInput] = useState("");
   const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -981,6 +994,7 @@ export function Chat(props: {
                 exportMessages(
                   session.messages.filter((msg) => !msg.isError),
                   session.topic,
+                  exportCaptureRef.current,
                 );
               }}
             />
@@ -1004,8 +1018,9 @@ export function Chat(props: {
           setAutoScroll(false);
         }}
       >
-        <AnimatedReorderGroup animationDuration={220} animationMinPixel={2}>
-          {messages.map((message, i) => {
+        <div ref={exportCaptureRef}>
+          <AnimatedReorderGroup animationDuration={220} animationMinPixel={2}>
+            {messages.map((message, i) => {
             const isUser = message.role === "user";
             const isCompressedSummary = !!message.compressedSummary;
             const isModelPicker =
@@ -1269,8 +1284,9 @@ export function Chat(props: {
                 </div>
               </div>
             );
-          })}
-        </AnimatedReorderGroup>
+            })}
+          </AnimatedReorderGroup>
+        </div>
       </div>
 
       <div className={styles["chat-input-panel"]}>

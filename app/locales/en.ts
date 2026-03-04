@@ -40,7 +40,7 @@ const en: LocaleType = {
     Title: "Export Messages",
     Copy: "Copy Text",
     Download: "Download Text",
-    Screenshot: "Screenshot",
+    Screenshot: "Download Screenshot",
     ScreenshotFailed: "Screenshot failed, please try again",
     ScreenshotMulti: (count: number) =>
       `Content is long, exported as ${count} image files`,

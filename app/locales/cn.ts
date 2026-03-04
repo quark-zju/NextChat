@@ -46,7 +46,7 @@ const cn = {
     Title: "导出聊天记录",
     Copy: "复制文本",
     Download: "下载文本",
-    Screenshot: "截图",
+    Screenshot: "下载截图",
     ScreenshotFailed: "截图失败，请重试",
     ScreenshotMulti: (count: number) => `内容较长，已拆分导出 ${count} 张图片`,
     MessageFromYou: "来自你的消息",
