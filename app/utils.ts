@@ -96,22 +96,24 @@ export function getEmojiUrl(unified: string, style: EmojiStyle) {
   return `https://cdn.staticfile.org/emoji-datasource-apple/14.0.0/img/${style}/64/${unified}.png`;
 }
 
-type DayPeriod = "morning" | "noon" | "evening";
-const NATURAL_DAY_START_HOUR = 5;
+type DayPeriod = "dawn" | "morning" | "noon" | "evening";
 
 function getDayPeriod(date: Date): DayPeriod {
   const hour = date.getHours();
-  if (hour >= NATURAL_DAY_START_HOUR && hour < 11) return "morning";
+  if (hour >= 0 && hour < 5) return "dawn";
+  if (hour >= 5 && hour < 11) return "morning";
   if (hour >= 11 && hour < 14) return "noon";
   return "evening";
 }
 
 function getPeriodLabel(period: DayPeriod, isChinese: boolean) {
   if (isChinese) {
+    if (period === "dawn") return "凌晨";
     if (period === "morning") return "早上";
     if (period === "noon") return "中午";
     return "晚上";
   }
+  if (period === "dawn") return "early morning";
   if (period === "morning") return "morning";
   if (period === "noon") return "noon";
   return "evening";
@@ -127,18 +129,15 @@ function getWeekdayLabel(date: Date, isChinese: boolean) {
 }
 
 function getDayDiff(from: Date, to: Date) {
-  const offsetMs = NATURAL_DAY_START_HOUR * 60 * 60 * 1000;
-  const shiftedFrom = new Date(from.getTime() - offsetMs);
-  const shiftedTo = new Date(to.getTime() - offsetMs);
   const fromDay = new Date(
-    shiftedFrom.getFullYear(),
-    shiftedFrom.getMonth(),
-    shiftedFrom.getDate(),
+    from.getFullYear(),
+    from.getMonth(),
+    from.getDate(),
   );
   const toDay = new Date(
-    shiftedTo.getFullYear(),
-    shiftedTo.getMonth(),
-    shiftedTo.getDate(),
+    to.getFullYear(),
+    to.getMonth(),
+    to.getDate(),
   );
   const diff = fromDay.getTime() - toDay.getTime();
   return Math.floor(diff / (24 * 60 * 60 * 1000));
