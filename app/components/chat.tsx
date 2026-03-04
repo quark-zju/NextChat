@@ -194,11 +194,22 @@ async function renderNodeSliceToPng(
   width: number,
   offsetY: number,
   height: number,
+  options?: {
+    paddingX?: number;
+    paddingTop?: number;
+    paddingBottom?: number;
+  },
 ) {
+  const paddingX = options?.paddingX ?? 0;
+  const paddingTop = options?.paddingTop ?? 0;
+  const paddingBottom = options?.paddingBottom ?? 0;
+  const canvasWidth = width + paddingX * 2;
+  const canvasHeight = height + paddingTop + paddingBottom;
+
   const wrapper = document.createElement("div");
   wrapper.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
-  wrapper.style.width = `${width}px`;
-  wrapper.style.height = `${height}px`;
+  wrapper.style.width = `${canvasWidth}px`;
+  wrapper.style.height = `${canvasHeight}px`;
   wrapper.style.overflow = "hidden";
   wrapper.style.background = getComputedStyle(document.body).backgroundColor;
 
@@ -206,7 +217,7 @@ async function renderNodeSliceToPng(
   inlineComputedStyles(node, cloned);
   cloned.style.margin = "0";
   cloned.style.width = `${width}px`;
-  cloned.style.transform = `translateY(-${offsetY}px)`;
+  cloned.style.transform = `translate(${paddingX}px, ${paddingTop - offsetY}px)`;
   cloned.style.transformOrigin = "top left";
   wrapper.appendChild(cloned);
 
@@ -229,8 +240,8 @@ async function renderNodeSliceToPng(
   });
 
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     throw new Error("No canvas context");
@@ -244,6 +255,8 @@ async function buildBubbleScreenshotPages(node: HTMLElement) {
   const width = Math.ceil(node.getBoundingClientRect().width);
   const totalHeight = Math.max(node.scrollHeight, node.clientHeight);
   const maxSliceHeight = 3200;
+  const paddingX = 24;
+  const edgePaddingY = 24;
   const pages: string[] = [];
 
   if (width <= 0 || totalHeight <= 0) {
@@ -252,17 +265,28 @@ async function buildBubbleScreenshotPages(node: HTMLElement) {
 
   // Fast path: render once when the whole node fits in one canvas slice.
   if (totalHeight <= maxSliceHeight) {
-    const single = await renderNodeSliceToPng(node, width, 0, totalHeight);
+    const single = await renderNodeSliceToPng(node, width, 0, totalHeight, {
+      paddingX,
+      paddingTop: edgePaddingY,
+      paddingBottom: edgePaddingY,
+    });
     return [single];
   }
 
   for (let offsetY = 0; offsetY < totalHeight; offsetY += maxSliceHeight) {
     const sliceHeight = Math.min(maxSliceHeight, totalHeight - offsetY);
+    const isFirst = offsetY === 0;
+    const isLast = offsetY + sliceHeight >= totalHeight;
     const page = await renderNodeSliceToPng(
       node,
       width,
       offsetY,
       sliceHeight,
+      {
+        paddingX,
+        paddingTop: isFirst ? edgePaddingY : 0,
+        paddingBottom: isLast ? edgePaddingY : 0,
+      },
     );
     pages.push(page);
   }
