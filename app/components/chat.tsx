@@ -899,7 +899,6 @@ export function Chat(props: {
             return (
               <div
                 key={renderKey}
-                data-reorder-id={reorderId}
                 className={
                   isUser ? styles["chat-message-user"] : styles["chat-message"]
                 }
@@ -930,7 +929,10 @@ export function Chat(props: {
                       </div>
                     </div>
                   )}
-                  <div className={styles["chat-message-item"]}>
+                  <div
+                    className={styles["chat-message-item"]}
+                    data-reorder-id={reorderId}
+                  >
                     {!isUser &&
                       !isModelPicker &&
                       !isCompressedSummary &&
