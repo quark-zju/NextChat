@@ -326,6 +326,7 @@ export function Settings(props: { closeSettings: () => void }) {
           </SettingItem>
           */}
         </List>
+        {/*
         <List>
           <SettingItem
             title={Locale.Settings.Prompt.Disable.Title}
@@ -357,6 +358,7 @@ export function Settings(props: { closeSettings: () => void }) {
             />
           </SettingItem>
         </List>
+        */}
         <List>
           {enabledAccessControl ? (
             <SettingItem title={Locale.Settings.AccessCode.Title}>
