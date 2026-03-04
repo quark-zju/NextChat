@@ -22,12 +22,6 @@ export type Message = ChatCompletionResponseMessage & {
   model?: string;
   imageUrls?: string[];
   reasoning?: string;
-  reasoningVisible?: boolean;
-  reasoningTranslated?: string;
-  reasoningTranslating?: boolean;
-  reasoningLiveTranslated?: string;
-  reasoningLiveTranslating?: boolean;
-  reasoningLiveSource?: string;
 };
 
 let nextMessageId = Date.now();
@@ -478,12 +472,6 @@ export const useChatStore = create<ChatStore>()(
           streaming: true,
           model: modelConfig.model,
           reasoning: "",
-          reasoningVisible: false,
-          reasoningTranslated: "",
-          reasoningTranslating: false,
-          reasoningLiveTranslated: "",
-          reasoningLiveTranslating: false,
-          reasoningLiveSource: "",
         });
 
         // get recent messages
