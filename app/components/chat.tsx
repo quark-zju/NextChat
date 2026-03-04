@@ -908,6 +908,7 @@ export function Chat(props: {
               !isUser &&
               !isModelPicker;
             const reorderId = getMessageReorderId(message, i);
+            const avatarReorderId = reorderId ? `avatar:${reorderId}` : undefined;
             const renderKey = reorderId ?? `static:${session.id}:${i}`;
 
             return (
@@ -925,7 +926,10 @@ export function Chat(props: {
                   }`}
                 >
                   {!isCompressedSummary && (
-                    <div className={styles["chat-message-avatar"]}>
+                    <div
+                      className={styles["chat-message-avatar"]}
+                      data-reorder-id={avatarReorderId}
+                    >
                       <Avatar role={message.role} model={message.model} />
                       {(message.preview || message.streaming) && (
                         <div className={styles["chat-message-status"]}>
