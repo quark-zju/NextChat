@@ -594,6 +594,10 @@
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.03);
   border: var(--border-in-light);
+
+  p {
+    margin: 4px 0;
+  }
 }
 
 .chat-message-actions {
