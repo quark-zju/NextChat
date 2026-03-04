@@ -1308,6 +1308,7 @@ export function Chat(props: {
                   {!isUser &&
                     !message.preview &&
                     !isCompressedSummary &&
+                    !isModelPicker &&
                     !showInlineThinkingDuringLoading && (
                       <div className={styles["chat-message-actions"]}>
                         <div className={styles["chat-message-action-date"]}>
