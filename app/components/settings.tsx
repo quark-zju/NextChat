@@ -416,11 +416,13 @@ export function Settings(props: { closeSettings: () => void }) {
                 icon={<ExportIcon />}
                 text={Locale.Settings.DataMigration.Export}
                 onClick={exportAllState}
+                className={styles["data-action-button"]}
               />
               <IconButton
                 icon={<DownloadIcon />}
                 text={Locale.Settings.DataMigration.Import}
                 onClick={() => importFileRef.current?.click()}
+                className={styles["data-action-button"]}
               />
             </div>
           </SettingItem>

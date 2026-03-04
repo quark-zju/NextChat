@@ -31,6 +31,13 @@
 .data-actions {
   display: flex;
   gap: 8px;
+  width: max-content;
+}
+
+.data-action-button {
+  white-space: nowrap;
+  width: max-content;
+  flex: 0 0 auto;
 }
 
 .hidden-file-input {
