@@ -24,6 +24,7 @@ import {
   BOT_HELLO,
   ROLES,
   createMessage,
+  getReasoningStreamSegment,
 } from "../store";
 import { useScreen } from "../store/screen";
 
@@ -898,9 +899,9 @@ export function Chat(props: {
               hasReasoning &&
               !isModelPicker &&
               !isCompressedSummary;
-            const thinkingPreview = getLastReasoningSegment(
-              message.reasoning ?? "",
-            );
+            const thinkingPreview =
+              getReasoningStreamSegment(message.id) ||
+              getLastReasoningSegment(message.reasoning ?? "");
             const showInlineThinkingDuringLoading =
               isReasoningOnlyStreaming && thinkingPreview.trim().length > 0;
             const showLoadingOnly =

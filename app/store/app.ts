@@ -173,6 +173,24 @@ export const BOT_HELLO: Message = createMessage({
   content: Locale.Store.BotHello,
 });
 
+const reasoningStreamSegmentCache = new Map<number, string>();
+
+export function setReasoningStreamSegment(messageId: number, segment: string) {
+  const normalized = segment.trim();
+  if (normalized.length === 0) return;
+  reasoningStreamSegmentCache.set(messageId, normalized);
+}
+
+export function getReasoningStreamSegment(messageId?: number) {
+  if (typeof messageId !== "number") return "";
+  return reasoningStreamSegmentCache.get(messageId) ?? "";
+}
+
+export function clearReasoningStreamSegment(messageId?: number) {
+  if (typeof messageId !== "number") return;
+  reasoningStreamSegmentCache.delete(messageId);
+}
+
 function createEmptySession(): ChatSession {
   const createDate = new Date().toLocaleString();
 
@@ -495,6 +513,7 @@ export const useChatStore = create<ChatStore>()(
             if (done) {
               botMessage.streaming = false;
               botMessage.content = content;
+              clearReasoningStreamSegment(botMessage.id);
               get().onNewMessage(botMessage);
               ControllerPool.remove(
                 sessionIndex,
@@ -505,11 +524,14 @@ export const useChatStore = create<ChatStore>()(
               set(() => ({}));
             }
           },
-          onReasoning(reasoning) {
+          onReasoning(reasoning, _done, segment) {
             const cleanedReasoning = reasoning
               .replace(/\n{3,}/g, "\n\n")
               .trim();
             botMessage.reasoning = cleanedReasoning;
+            if (typeof botMessage.id === "number" && segment) {
+              setReasoningStreamSegment(botMessage.id, segment);
+            }
             if (DEV_REASONING_DEBUG) {
               console.log("[Reasoning Debug][store] update", {
                 sessionIndex,
@@ -531,6 +553,7 @@ export const useChatStore = create<ChatStore>()(
             botMessage.streaming = false;
             userMessage.isError = true;
             botMessage.isError = true;
+            clearReasoningStreamSegment(botMessage.id);
             set(() => ({}));
             ControllerPool.remove(sessionIndex, botMessage.id ?? messageIndex);
           },
