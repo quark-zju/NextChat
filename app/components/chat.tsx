@@ -71,6 +71,18 @@ function getProviderByModel(model?: string) {
   return "default";
 }
 
+function getLastReasoningSegment(text: string) {
+  const normalized = text.replace(/\n{3,}/g, "\n\n").trim();
+  if (!normalized) return "";
+  const parts = normalized
+    .split(/\n\s*\n/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const segment = parts.at(-1) ?? normalized;
+  if (segment.length <= 500) return segment;
+  return segment.slice(-500);
+}
+
 function getCompactModelName(model?: string) {
   if (!model || model.length === 0) return "";
   const rawName = model.includes("/")
@@ -886,7 +898,9 @@ export function Chat(props: {
               hasReasoning &&
               !isModelPicker &&
               !isCompressedSummary;
-            const thinkingPreview = (message.reasoning ?? "").trim();
+            const thinkingPreview = getLastReasoningSegment(
+              message.reasoning ?? "",
+            );
             const showInlineThinkingDuringLoading =
               isReasoningOnlyStreaming && thinkingPreview.trim().length > 0;
             const showLoadingOnly =
