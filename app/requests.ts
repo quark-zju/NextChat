@@ -189,7 +189,7 @@ export async function requestChatStream(
     modelConfig?: ModelConfig;
     forceModel?: string;
     onMessage: (message: string, done: boolean) => void;
-    onReasoning?: (reasoning: string, done: boolean) => void;
+    onReasoning?: (reasoning: string, done: boolean, segment?: string) => void;
     onError: (error: Error, statusCode?: number) => void;
     onController?: (controller: AbortController) => void;
   },
@@ -260,7 +260,7 @@ export async function requestChatStream(
         });
       }
       options?.onMessage(responseText, true);
-      options?.onReasoning?.(reasoningText, true);
+      options?.onReasoning?.(reasoningText, true, "");
       if (shouldAbort && !controller.signal.aborted) {
         controller.abort();
       }
@@ -308,20 +308,21 @@ export async function requestChatStream(
               }
               options?.onMessage(responseText, false);
             } else if (event.type === "reasoning") {
-              reasoningText += event.text ?? "";
+              const segment = event.text ?? "";
+              reasoningText += segment;
               sawReasoningEvent = true;
               if (firstReasoningAt == null)
                 firstReasoningAt = performance.now();
-              if (DEV_REASONING_DEBUG && event.text?.length) {
+              if (DEV_REASONING_DEBUG && segment.length) {
                 console.log("[Reasoning Debug][client] reasoning delta", {
                   ts: Date.now(),
                   elapsedMs: Math.round(performance.now() - requestStartedAt),
-                  deltaLen: event.text.length,
+                  deltaLen: segment.length,
                   totalLen: reasoningText.length,
-                  preview: String(event.text).slice(0, 80),
+                  preview: String(segment).slice(0, 80),
                 });
               }
-              options?.onReasoning?.(reasoningText, false);
+              options?.onReasoning?.(reasoningText, false, segment);
             } else if (event.type === "done") {
               sawDoneEvent = true;
             }
@@ -345,8 +346,9 @@ export async function requestChatStream(
             responseText += event.text ?? "";
             options?.onMessage(responseText, false);
           } else if (event.type === "reasoning") {
-            reasoningText += event.text ?? "";
-            options?.onReasoning?.(reasoningText, false);
+            const segment = event.text ?? "";
+            reasoningText += segment;
+            options?.onReasoning?.(reasoningText, false, segment);
           }
         } catch {
           responseText += (responseText.length === 0 ? "" : "\n") + pendingText;

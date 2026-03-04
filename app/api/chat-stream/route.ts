@@ -483,10 +483,6 @@ async function createStream(req: NextRequest) {
 
       const pushReasoningText = (text: string) => {
         if (text.length === 0) return;
-        if (!translationEnabled) {
-          safeEnqueue({ type: "reasoning", text });
-          return;
-        }
 
         pendingReasoning += text;
         while (true) {
