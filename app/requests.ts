@@ -1,6 +1,7 @@
 import type { ChatRequest, ChatReponse } from "./api/openai/typing";
 import { Message, ModelConfig, useAccessStore, useChatStore } from "./store";
 import { showToast } from "./components/ui-lib";
+import { getLang } from "./locales";
 
 const TIME_OUT_MS = 60000;
 export const INTERNAL_TASK_MODEL = "openai/gpt-4o-mini";
@@ -9,6 +10,12 @@ type StreamEvent =
   | { type: "content"; text: string }
   | { type: "reasoning"; text: string }
   | { type: "done" };
+
+function getChatLanguageHeader() {
+  const lang = getLang();
+  if (lang === "cn") return "zh-CN";
+  return "en-US";
+}
 
 const makeRequestParam = (
   messages: Message[],
@@ -206,6 +213,7 @@ export async function requestChatStream(
       headers: {
         "Content-Type": "application/json",
         path: "v1/chat/completions",
+        "x-chat-lang": getChatLanguageHeader(),
         ...(typeof req?.model === "string"
           ? { "x-chat-model": req.model }
           : {}),

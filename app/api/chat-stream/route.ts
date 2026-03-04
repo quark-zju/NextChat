@@ -2,6 +2,11 @@ import { createParser } from "eventsource-parser";
 import { NextRequest } from "next/server";
 import { requestOpenai } from "../common";
 import {
+  isMostlyEnglish,
+  translateReasoning,
+  DEFAULT_TARGET_LANGUAGE,
+} from "../reasoning-translate/shared";
+import {
   isReplayEnabled,
   parseReplayRequest,
   type ReplayEvent,
@@ -22,6 +27,98 @@ function encodeEvent(encoder: TextEncoder, event: StreamChunkEvent) {
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function normalizeTargetLanguage(raw?: string | null) {
+  const input = (raw ?? "").trim().toLowerCase();
+  if (!input) return DEFAULT_TARGET_LANGUAGE;
+  if (input === "cn" || input === "zh" || input.startsWith("zh-")) {
+    return "zh-CN";
+  }
+  if (input === "en" || input.startsWith("en-")) {
+    return "en-US";
+  }
+  return raw?.trim() || DEFAULT_TARGET_LANGUAGE;
+}
+
+function parseAcceptLanguage(raw?: string | null) {
+  if (!raw) return "";
+  const first = raw
+    .split(",")
+    .map((part) => part.trim())
+    .find(Boolean);
+  if (!first) return "";
+  return first.split(";")[0]?.trim() ?? "";
+}
+
+function resolveTargetLanguage(req: NextRequest) {
+  const explicit = req.headers.get("x-chat-lang");
+  if (explicit && explicit.trim().length > 0) {
+    return normalizeTargetLanguage(explicit);
+  }
+  return normalizeTargetLanguage(
+    parseAcceptLanguage(req.headers.get("accept-language")),
+  );
+}
+
+function shouldTranslateReasoning(targetLanguage: string) {
+  return !targetLanguage.toLowerCase().startsWith("en");
+}
+
+function buildTranslationFailureText(targetLanguage: string, source: string) {
+  const normalized = source.trim();
+  if (normalized.length === 0) {
+    return "";
+  }
+
+  if (targetLanguage.toLowerCase().startsWith("zh")) {
+    return `【思考翻译失败，以下为原文】\n\n${normalized}`;
+  }
+
+  return `[Reasoning translation failed. Original text below]\n\n${normalized}`;
+}
+
+const LIVE_SEGMENT_MAX_CHARS = 260;
+
+function takeReasoningSegment(buffer: string) {
+  const normalized = buffer.replace(/\r\n/g, "\n");
+  if (normalized.length === 0) {
+    return { segment: "", rest: "" };
+  }
+
+  const paragraphMatch = normalized.match(/\n{2,}/);
+  if (paragraphMatch && typeof paragraphMatch.index === "number") {
+    const splitIndex = paragraphMatch.index;
+    const segment = normalized.slice(0, splitIndex).trim();
+    const rest = normalized.slice(splitIndex + paragraphMatch[0].length);
+    if (segment.length > 0) {
+      return { segment, rest };
+    }
+  }
+
+  if (normalized.length < LIVE_SEGMENT_MAX_CHARS) {
+    return { segment: "", rest: normalized };
+  }
+
+  const head = normalized.slice(0, LIVE_SEGMENT_MAX_CHARS);
+  let splitIndex = Math.max(
+    head.lastIndexOf(". "),
+    head.lastIndexOf("? "),
+    head.lastIndexOf("! "),
+    head.lastIndexOf("。"),
+    head.lastIndexOf("！"),
+    head.lastIndexOf("？"),
+  );
+
+  if (splitIndex < 80) {
+    splitIndex = LIVE_SEGMENT_MAX_CHARS;
+  } else if (splitIndex < head.length) {
+    splitIndex += 1;
+  }
+
+  const segment = normalized.slice(0, splitIndex).trim();
+  const rest = normalized.slice(splitIndex);
+  return { segment, rest };
 }
 
 function createReplayStream(payload: ReplayPayload) {
@@ -198,20 +295,25 @@ async function createStream(req: NextRequest) {
   const decoder = new TextDecoder();
   const streamStartedAt = Date.now();
   const traceId = Math.random().toString(36).slice(2, 10);
+  const targetLanguage = resolveTargetLanguage(req);
+  const translationEnabled = shouldTranslateReasoning(targetLanguage);
   const replayEnabled = isReplayEnabled();
   const replayRequest = await req
     .clone()
     .json()
     .then((body) => parseReplayRequest(body))
     .catch(() => null);
+  const replayKey = replayRequest
+    ? `${replayRequest.key}:${targetLanguage.toLowerCase()}`
+    : "";
 
   if (replayEnabled && replayRequest) {
-    const payload = await loadReplayPayload(req, replayRequest.key);
+    const payload = await loadReplayPayload(req, replayKey);
     if (payload) {
-      console.log("[Replay] hit", replayRequest.key);
+      console.log("[Replay] hit", replayKey);
       return createReplayStream(payload);
     }
-    console.log("[Replay] miss", replayRequest.key);
+    console.log("[Replay] miss", replayKey);
   }
 
   const res = await requestOpenai(req);
@@ -224,7 +326,7 @@ async function createStream(req: NextRequest) {
     console.log("[Stream] error ", content);
 
     if (replayEnabled && replayRequest) {
-      await persistReplayPayload(req, replayRequest.key, replayRequest.request, {
+      await persistReplayPayload(req, replayKey, replayRequest.request, {
         content: "```json\n" + content + "```",
         reasoning: "",
         events: [
@@ -249,6 +351,8 @@ async function createStream(req: NextRequest) {
       const replayEvents: ReplayEvent[] = [];
       let replayContent = "";
       let replayReasoning = "";
+      let reasoningTranslateQueue = Promise.resolve();
+      let pendingReasoning = "";
 
       const recordReplayEvent = (event: StreamChunkEvent) => {
         const atMs = Date.now() - streamStartedAt;
@@ -290,6 +394,66 @@ async function createStream(req: NextRequest) {
         }
       };
 
+      const enqueueReasoningChunk = (text: string) => {
+        const chunk = text.trim();
+        if (chunk.length === 0) return;
+        reasoningTranslateQueue = reasoningTranslateQueue
+          .then(async () => {
+            if (!translationEnabled || !isMostlyEnglish(chunk)) {
+              safeEnqueue({ type: "reasoning", text: chunk });
+              return;
+            }
+
+            try {
+              const result = await translateReasoning(chunk, {
+                targetLanguage,
+                fallbackToSourceOnError: false,
+              });
+              const translated = result.translated.trim();
+              safeEnqueue({
+                type: "reasoning",
+                text: translated.length > 0 ? translated : chunk,
+              });
+            } catch (error) {
+              console.error("[Reasoning Translate][stream]", error);
+              safeEnqueue({
+                type: "reasoning",
+                text: buildTranslationFailureText(targetLanguage, chunk),
+              });
+            }
+          })
+          .catch((error) => {
+            console.error("[Reasoning Translate Queue]", error);
+          });
+      };
+
+      const pushReasoningText = (text: string) => {
+        if (text.length === 0) return;
+        if (!translationEnabled) {
+          safeEnqueue({ type: "reasoning", text });
+          return;
+        }
+
+        pendingReasoning += text;
+        while (true) {
+          const { segment, rest } = takeReasoningSegment(pendingReasoning);
+          pendingReasoning = rest;
+          if (!segment) {
+            break;
+          }
+          enqueueReasoningChunk(segment);
+        }
+      };
+
+      const flushReasoningQueue = async () => {
+        const tail = pendingReasoning.trim();
+        if (tail.length > 0) {
+          pendingReasoning = "";
+          enqueueReasoningChunk(tail);
+        }
+        await reasoningTranslateQueue;
+      };
+
       function onParse(event: any) {
         if (closed || event.type !== "event") return;
         const data = event.data;
@@ -298,7 +462,6 @@ async function createStream(req: NextRequest) {
         // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
         if (data === "[DONE]") {
           sawDone = true;
-          safeEnqueue({ type: "done" });
           if (SERVER_REASONING_DEBUG) {
             console.log("[Reasoning Debug][server] done marker", {
               traceId,
@@ -310,7 +473,6 @@ async function createStream(req: NextRequest) {
               reasoningTotalLen,
             });
           }
-          safeClose();
           return;
         }
 
@@ -362,7 +524,7 @@ async function createStream(req: NextRequest) {
             if (reasoning.length > 0) {
               reasoningDeltaCount += 1;
               reasoningTotalLen += reasoning.length;
-              safeEnqueue({ type: "reasoning", text: reasoning });
+              pushReasoningText(reasoning);
             }
           } catch (e) {
             console.error("[Stream Parse]", {
@@ -414,6 +576,9 @@ async function createStream(req: NextRequest) {
         });
       }
 
+      await flushReasoningQueue();
+      safeEnqueue({ type: "done" });
+
       if (replayEnabled && replayRequest) {
         try {
           const hasDone = replayEvents.some((event) => event.type === "done");
@@ -422,7 +587,7 @@ async function createStream(req: NextRequest) {
           }
           await persistReplayPayload(
             req,
-            replayRequest.key,
+            replayKey,
             replayRequest.request,
             {
             content: replayContent,
@@ -430,7 +595,7 @@ async function createStream(req: NextRequest) {
             events: replayEvents,
             },
           );
-          console.log("[Replay] recorded", replayRequest.key, replayEvents.length);
+          console.log("[Replay] recorded", replayKey, replayEvents.length);
         } catch (error) {
           console.error("[Replay] record failed", error);
         }
