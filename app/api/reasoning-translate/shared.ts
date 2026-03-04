@@ -95,7 +95,7 @@ async function translateSegment(
           {
             role: "system",
             content:
-              "You are a translation engine. Translate the user text accurately and naturally. Keep paragraph and bullet structure. Output translation only.",
+              "You are a translation engine. Translate all user text into the target language, including headings and section titles. Preserve markdown and line-break structure (paragraphs, bullets, blank lines). Do not keep English headings unless they are proper nouns. Output translation only.",
           },
           {
             role: "user",

@@ -353,6 +353,7 @@ async function createStream(req: NextRequest) {
       let replayReasoning = "";
       let reasoningTranslateQueue = Promise.resolve();
       let pendingReasoning = "";
+      let emittedReasoningChunkCount = 0;
 
       const recordReplayEvent = (event: StreamChunkEvent) => {
         const atMs = Date.now() - streamStartedAt;
@@ -399,8 +400,22 @@ async function createStream(req: NextRequest) {
         if (chunk.length === 0) return;
         reasoningTranslateQueue = reasoningTranslateQueue
           .then(async () => {
+            const withSeparator = (value: string) => {
+              const normalized = value.trim();
+              if (normalized.length === 0) return "";
+              if (emittedReasoningChunkCount === 0) {
+                emittedReasoningChunkCount += 1;
+                return normalized;
+              }
+              emittedReasoningChunkCount += 1;
+              return `\n\n${normalized}`;
+            };
+
             if (!translationEnabled || !isMostlyEnglish(chunk)) {
-              safeEnqueue({ type: "reasoning", text: chunk });
+              const textWithBreak = withSeparator(chunk);
+              if (textWithBreak.length > 0) {
+                safeEnqueue({ type: "reasoning", text: textWithBreak });
+              }
               return;
             }
 
@@ -410,15 +425,21 @@ async function createStream(req: NextRequest) {
                 fallbackToSourceOnError: false,
               });
               const translated = result.translated.trim();
+              const textWithBreak = withSeparator(
+                translated.length > 0 ? translated : chunk,
+              );
               safeEnqueue({
                 type: "reasoning",
-                text: translated.length > 0 ? translated : chunk,
+                text: textWithBreak,
               });
             } catch (error) {
               console.error("[Reasoning Translate][stream]", error);
+              const textWithBreak = withSeparator(
+                buildTranslationFailureText(targetLanguage, chunk),
+              );
               safeEnqueue({
                 type: "reasoning",
-                text: buildTranslationFailureText(targetLanguage, chunk),
+                text: textWithBreak,
               });
             }
           })
