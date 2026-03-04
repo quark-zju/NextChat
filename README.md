@@ -1,13 +1,13 @@
-A fork of [ChatGPT-Next-Web](https://github.com/Yidadaa/ChatGPT-Next-Web) with some customizations:
+[NextChat](https://github.com/ChatGPTNextWeb/NextChat) 早期版本的 fork，主要给非技术用户使用。
 
-API:
-- Does not proxy user-provided `OPENAPI_API_KEY` requests. The API key can only be set by server-side `OPENAI_API_KEY`.
-- Added a limit about the total request count, specified by the `usage-limit` file. To set the limit to `123`, run `rm -f state/usage-limit; ln -s 123 state/usage-limit`.
+- 避免花哨功能，如提示词商店。模型选择只给主流模型。
+- 侧重中文支持，比如对 Gemini 英文思考过程会翻译。
+- 对于小屏幕大字体界面有所考虑。
 
-UI:
-- Reduced the height of the input box.
-- Minor changes to translations.
+配置文件 `.env.local` 格式：
 
-Config:
-- Default send key is "ENTER".
-- Prefer `zh-CN` if the browser language list includes it.
+```
+OPENAI_API_KEY=sk-...
+OPENROUTER_API_KEY=sk-or-...
+CODE=access-code
+```
