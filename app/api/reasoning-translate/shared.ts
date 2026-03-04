@@ -71,6 +71,10 @@ async function translateSegment(
 ) {
   const requestPath = "v1/chat/completions";
   const providerConfig = getProviderConfig(requestPath, model);
+  const requestModel =
+    providerConfig.provider === "openai" && model.startsWith("openai/")
+      ? model.slice("openai/".length)
+      : model;
   if (!providerConfig.apiKey) {
     throw new Error(`Missing API key for ${providerConfig.provider}`);
   }
@@ -85,7 +89,7 @@ async function translateSegment(
         ...providerConfig.headers,
       },
       body: JSON.stringify({
-        model,
+        model: requestModel,
         temperature: 0.1,
         messages: [
           {
