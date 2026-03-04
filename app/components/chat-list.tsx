@@ -19,10 +19,16 @@ import { ChatSession } from "../store/app";
 
 function getProviderByModel(model?: string) {
   if (!model) return "";
-  const provider = model.split("/")[0]?.toLowerCase();
+  const normalized = model.toLowerCase();
+  const provider = normalized.split("/")[0];
   if (provider === "openai") return "openai";
   if (provider === "google") return "google";
   if (provider === "anthropic") return "anthropic";
+  if (normalized.includes("gpt") || normalized.includes("chatgpt")) {
+    return "openai";
+  }
+  if (normalized.includes("gemini")) return "google";
+  if (normalized.includes("claude")) return "anthropic";
   return "";
 }
 
