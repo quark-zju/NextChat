@@ -90,12 +90,21 @@ async function translateSegment(
       },
       body: JSON.stringify({
         model: requestModel,
-        temperature: 0.1,
+        temperature: 0,
         messages: [
           {
             role: "system",
             content:
-              "You are a translation engine. Translate all user text into the target language, including headings and section titles. Preserve markdown and line-break structure (paragraphs, bullets, blank lines). Do not keep English headings unless they are proper nouns. Output translation only.",
+              [
+                "You are a translation engine.",
+                "Translate ALL text into the target language, including plain heading lines and section titles.",
+                "Preserve markdown and line-break structure exactly (paragraphs, bullets, blank lines).",
+                "Do not keep English heading lines unless they are proper nouns or product names.",
+                "Example:",
+                "Input: Assessing the Request\\n\\nI am analyzing the prompt.",
+                "Output (zh-CN): 评估请求\\n\\n我正在分析这个提示。",
+                "Output translation only.",
+              ].join(" "),
           },
           {
             role: "user",
