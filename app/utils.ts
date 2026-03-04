@@ -165,6 +165,22 @@ export function formatRelativeDateTime(input: string | Date, now = new Date()) {
   const isChinese = lang === "cn";
   const diffMs = Math.max(0, now.getTime() - date.getTime());
   const diffMinutes = Math.floor(diffMs / (60 * 1000));
+  const dayDiff = getDayDiff(now, date);
+  const period = getPeriodLabel(getDayPeriod(date), isChinese);
+
+  // Cross-day should always use calendar labels to avoid "x minutes ago" at midnight boundary.
+  if (dayDiff === 1) {
+    return isChinese ? `昨天${period}` : `yesterday ${period}`;
+  }
+
+  if (dayDiff === 2) {
+    return isChinese ? `前天${period}` : `the day before yesterday ${period}`;
+  }
+
+  if (dayDiff > 2 && dayDiff < 7) {
+    const weekday = getWeekdayLabel(date, isChinese);
+    return isChinese ? `${weekday}${period}` : `${weekday} ${period}`;
+  }
 
   if (diffMs <= 2 * 60 * 1000) {
     return isChinese ? "刚刚" : "just now";
@@ -178,24 +194,8 @@ export function formatRelativeDateTime(input: string | Date, now = new Date()) {
     return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
   }
 
-  const period = getPeriodLabel(getDayPeriod(date), isChinese);
-  const dayDiff = getDayDiff(now, date);
-
   if (dayDiff === 0 && diffMs < 24 * 60 * 60 * 1000) {
     return isChinese ? `今天${period}` : `this ${period}`;
-  }
-
-  if (dayDiff === 1) {
-    return isChinese ? `昨天${period}` : `yesterday ${period}`;
-  }
-
-  if (dayDiff === 2) {
-    return isChinese ? `前天${period}` : `the day before yesterday ${period}`;
-  }
-
-  if (dayDiff > 2 && dayDiff < 7) {
-    const weekday = getWeekdayLabel(date, isChinese);
-    return isChinese ? `${weekday}${period}` : `${weekday} ${period}`;
   }
 
   return formatAbsoluteDate(date, isChinese);
