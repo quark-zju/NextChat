@@ -97,10 +97,11 @@ export function getEmojiUrl(unified: string, style: EmojiStyle) {
 }
 
 type DayPeriod = "morning" | "noon" | "evening";
+const NATURAL_DAY_START_HOUR = 5;
 
 function getDayPeriod(date: Date): DayPeriod {
   const hour = date.getHours();
-  if (hour >= 5 && hour < 11) return "morning";
+  if (hour >= NATURAL_DAY_START_HOUR && hour < 11) return "morning";
   if (hour >= 11 && hour < 14) return "noon";
   return "evening";
 }
@@ -126,8 +127,19 @@ function getWeekdayLabel(date: Date, isChinese: boolean) {
 }
 
 function getDayDiff(from: Date, to: Date) {
-  const fromDay = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-  const toDay = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+  const offsetMs = NATURAL_DAY_START_HOUR * 60 * 60 * 1000;
+  const shiftedFrom = new Date(from.getTime() - offsetMs);
+  const shiftedTo = new Date(to.getTime() - offsetMs);
+  const fromDay = new Date(
+    shiftedFrom.getFullYear(),
+    shiftedFrom.getMonth(),
+    shiftedFrom.getDate(),
+  );
+  const toDay = new Date(
+    shiftedTo.getFullYear(),
+    shiftedTo.getMonth(),
+    shiftedTo.getDate(),
+  );
   const diff = fromDay.getTime() - toDay.getTime();
   return Math.floor(diff / (24 * 60 * 60 * 1000));
 }
