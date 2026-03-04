@@ -250,6 +250,12 @@ async function buildBubbleScreenshotPages(node: HTMLElement) {
     return pages;
   }
 
+  // Fast path: render once when the whole node fits in one canvas slice.
+  if (totalHeight <= maxSliceHeight) {
+    const single = await renderNodeSliceToPng(node, width, 0, totalHeight);
+    return [single];
+  }
+
   for (let offsetY = 0; offsetY < totalHeight; offsetY += maxSliceHeight) {
     const sliceHeight = Math.min(maxSliceHeight, totalHeight - offsetY);
     const page = await renderNodeSliceToPng(
