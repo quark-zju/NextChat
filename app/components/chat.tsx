@@ -169,22 +169,28 @@ function downloadDataUrl(dataUrl: string, filename: string) {
   document.body.removeChild(element);
 }
 
-function collectCssText() {
-  let cssText = "";
-  Array.from(document.styleSheets).forEach((sheet) => {
-    try {
-      const rules = Array.from((sheet as CSSStyleSheet).cssRules);
-      rules.forEach((rule) => {
-        cssText += `${rule.cssText}\n`;
-      });
-    } catch {}
-  });
-  return cssText;
+function inlineComputedStyles(
+  source: HTMLElement,
+  target: HTMLElement,
+) {
+  const computed = window.getComputedStyle(source);
+  const styleText = Array.from(computed)
+    .map((name) => `${name}: ${computed.getPropertyValue(name)};`)
+    .join(" ");
+  target.setAttribute("style", styleText);
+
+  const sourceChildren = Array.from(source.children) as HTMLElement[];
+  const targetChildren = Array.from(target.children) as HTMLElement[];
+  for (let i = 0; i < sourceChildren.length; i += 1) {
+    const sourceChild = sourceChildren[i];
+    const targetChild = targetChildren[i];
+    if (!sourceChild || !targetChild) continue;
+    inlineComputedStyles(sourceChild, targetChild);
+  }
 }
 
 async function renderNodeSliceToPng(
   node: HTMLElement,
-  cssText: string,
   width: number,
   offsetY: number,
   height: number,
@@ -197,6 +203,7 @@ async function renderNodeSliceToPng(
   wrapper.style.background = getComputedStyle(document.body).backgroundColor;
 
   const cloned = node.cloneNode(true) as HTMLElement;
+  inlineComputedStyles(node, cloned);
   cloned.style.margin = "0";
   cloned.style.width = `${width}px`;
   cloned.style.transform = `translateY(-${offsetY}px)`;
@@ -204,11 +211,9 @@ async function renderNodeSliceToPng(
   wrapper.appendChild(cloned);
 
   const wrapperHtml = new XMLSerializer().serializeToString(wrapper);
-  const safeCss = cssText.replace(/<\/style>/g, "");
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
       <foreignObject x="0" y="0" width="100%" height="100%">
-        <style>${safeCss}</style>
         ${wrapperHtml}
       </foreignObject>
     </svg>
@@ -239,7 +244,6 @@ async function buildBubbleScreenshotPages(node: HTMLElement) {
   const width = Math.ceil(node.getBoundingClientRect().width);
   const totalHeight = Math.max(node.scrollHeight, node.clientHeight);
   const maxSliceHeight = 3200;
-  const cssText = collectCssText();
   const pages: string[] = [];
 
   if (width <= 0 || totalHeight <= 0) {
@@ -250,7 +254,6 @@ async function buildBubbleScreenshotPages(node: HTMLElement) {
     const sliceHeight = Math.min(maxSliceHeight, totalHeight - offsetY);
     const page = await renderNodeSliceToPng(
       node,
-      cssText,
       width,
       offsetY,
       sliceHeight,
