@@ -37,9 +37,13 @@ const en: LocaleType = {
     Send: "Send",
   },
   Export: {
-    Title: "All Messages",
-    Copy: "Copy All",
-    Download: "Download",
+    Title: "Export Messages",
+    Copy: "Copy Text",
+    Download: "Download Text",
+    Screenshot: "Screenshot",
+    ScreenshotFailed: "Screenshot failed, please try again",
+    ScreenshotMulti: (count: number) =>
+      `Content is long, exported as ${count} image files`,
     MessageFromYou: "Message From You",
     MessageFromChatGPT: "Message From AI",
   },

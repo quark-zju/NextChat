@@ -47,7 +47,7 @@ import { AnimatedReorderGroup } from "./AnimatedReorderGroup";
 import styles from "./home.module.scss";
 import chatStyle from "./chat.module.scss";
 
-import { Input, Modal, showModal } from "./ui-lib";
+import { Input, Modal, showModal, showToast } from "./ui-lib";
 
 import TextareaAutosize from "react-textarea-autosize";
 import { EmojiStyle } from "emoji-picker-react";
@@ -159,39 +159,167 @@ export function Avatar(props: { role: Message["role"]; model?: string }) {
   );
 }
 
+function downloadDataUrl(dataUrl: string, filename: string) {
+  const element = document.createElement("a");
+  element.setAttribute("href", dataUrl);
+  element.setAttribute("download", filename);
+  element.style.display = "none";
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+}
+
+function wrapLineByWidth(
+  ctx: CanvasRenderingContext2D,
+  line: string,
+  maxWidth: number,
+) {
+  if (ctx.measureText(line).width <= maxWidth) {
+    return [line];
+  }
+
+  const wrapped: string[] = [];
+  let current = "";
+  for (const ch of line) {
+    const candidate = current + ch;
+    if (ctx.measureText(candidate).width <= maxWidth) {
+      current = candidate;
+      continue;
+    }
+
+    if (current.length > 0) {
+      wrapped.push(current);
+    }
+    current = ch;
+  }
+
+  if (current.length > 0) {
+    wrapped.push(current);
+  }
+
+  return wrapped;
+}
+
+function buildScreenshotPages(text: string) {
+  const lines: string[] = [];
+  const canvasWidth = 1400;
+  const horizontalPadding = 48;
+  const verticalPadding = 56;
+  const lineHeight = 34;
+  const maxCanvasHeight = 14000;
+  const maxTextWidth = canvasWidth - horizontalPadding * 2;
+
+  const tempCanvas = document.createElement("canvas");
+  const tempCtx = tempCanvas.getContext("2d");
+  if (!tempCtx) {
+    return [];
+  }
+
+  tempCtx.font = '500 24px "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
+
+  text
+    .replace(/\r/g, "")
+    .split("\n")
+    .forEach((line) => {
+      if (line.length === 0) {
+        lines.push("");
+        return;
+      }
+      const wrapped = wrapLineByWidth(tempCtx, line, maxTextWidth);
+      lines.push(...wrapped);
+    });
+
+  const usableHeight = maxCanvasHeight - verticalPadding * 2;
+  const linesPerPage = Math.max(1, Math.floor(usableHeight / lineHeight));
+  const pageCount = Math.max(1, Math.ceil(lines.length / linesPerPage));
+  const pages: string[] = [];
+
+  for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+    const pageLines = lines.slice(
+      pageIndex * linesPerPage,
+      (pageIndex + 1) * linesPerPage,
+    );
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) continue;
+
+    canvas.width = canvasWidth;
+    canvas.height = Math.max(
+      verticalPadding * 2 + pageLines.length * lineHeight,
+      280,
+    );
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#111111";
+    ctx.font =
+      '500 24px "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
+    ctx.textBaseline = "top";
+
+    pageLines.forEach((line, index) => {
+      const y = verticalPadding + index * lineHeight;
+      ctx.fillText(line, horizontalPadding, y);
+    });
+
+    pages.push(canvas.toDataURL("image/png"));
+  }
+
+  return pages;
+}
+
 function exportMessages(messages: Message[], topic: string) {
-  const mdText =
-    `# ${topic}\n\n` +
+  const textContent =
+    `${topic}\n\n` +
     messages
       .map((m) => {
-        return m.role === "user"
-          ? `## ${Locale.Export.MessageFromYou}:\n${m.content}`
-          : `## ${Locale.Export.MessageFromChatGPT}:\n${m.content.trim()}`;
+        const title =
+          m.role === "user"
+            ? Locale.Export.MessageFromYou
+            : Locale.Export.MessageFromChatGPT;
+        const content = (m.content ?? "").trim();
+        return `${title}:\n${content}`;
       })
       .join("\n\n");
-  const filename = `${topic}.md`;
+
+  const textFilename = `${topic}.txt`;
 
   showModal({
     title: Locale.Export.Title,
-    children: (
-      <div className="markdown-body">
-        <pre className={styles["export-content"]}>{mdText}</pre>
-      </div>
-    ),
     actions: [
       <IconButton
         key="copy"
         icon={<CopyIcon />}
         bordered
         text={Locale.Export.Copy}
-        onClick={() => copyToClipboard(mdText)}
+        onClick={() => copyToClipboard(textContent)}
       />,
       <IconButton
         key="download"
         icon={<DownloadIcon />}
         bordered
         text={Locale.Export.Download}
-        onClick={() => downloadAs(mdText, filename)}
+        onClick={() => downloadAs(textContent, textFilename)}
+      />,
+      <IconButton
+        key="screenshot"
+        icon={<CameraIcon />}
+        bordered
+        text={Locale.Export.Screenshot}
+        onClick={() => {
+          const pages = buildScreenshotPages(textContent);
+          if (pages.length === 0) {
+            showToast(Locale.Export.ScreenshotFailed);
+            return;
+          }
+          if (pages.length === 1) {
+            downloadDataUrl(pages[0], `${topic}.png`);
+            return;
+          }
+          pages.forEach((page, index) => {
+            downloadDataUrl(page, `${topic}-part-${index + 1}.png`);
+          });
+          showToast(Locale.Export.ScreenshotMulti(pages.length));
+        }}
       />,
     ],
   });
