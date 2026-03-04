@@ -121,7 +121,7 @@ export const ModalConfigValidator = {
     return limitModel(x);
   },
   max_tokens(x: number) {
-    return limitNumber(x, 2000, 32000, 10000);
+    return limitNumber(x, 8000, 80000, 10000);
   },
   presence_penalty(x: number) {
     return limitNumber(x, -2, 2, 0);
@@ -719,7 +719,7 @@ export const useChatStore = create<ChatStore>()(
     }),
     {
       name: LOCAL_KEY,
-      version: 1.4,
+      version: 1.5,
       migrate(persistedState, version) {
         const state = persistedState as ChatStore;
 
@@ -742,6 +742,18 @@ export const useChatStore = create<ChatStore>()(
           state.config.modelConfig.model = limitModel(
             state.config.modelConfig.model,
           );
+        }
+
+        if (version < 1.5) {
+          if (state.config.compressMessageLengthThreshold <= 10000) {
+            state.config.compressMessageLengthThreshold = 10000;
+          }
+          if (
+            typeof state.config.modelConfig.max_tokens === "number" &&
+            state.config.modelConfig.max_tokens <= 8000
+          ) {
+            state.config.modelConfig.max_tokens = 8000;
+          }
         }
 
         return state;

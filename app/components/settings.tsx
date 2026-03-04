@@ -425,8 +425,8 @@ export function Settings(props: { closeSettings: () => void }) {
           >
             <input
               type="number"
-              min={500}
-              max={4000}
+              min={8000}
+              max={80000}
               value={config.compressMessageLengthThreshold}
               onChange={(e) =>
                 updateConfig(
@@ -467,8 +467,8 @@ export function Settings(props: { closeSettings: () => void }) {
           >
             <input
               type="number"
-              min={100}
-              max={32000}
+              min={8000}
+              max={80000}
               value={config.modelConfig.max_tokens}
               onChange={(e) =>
                 updateConfig(
