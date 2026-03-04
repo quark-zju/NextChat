@@ -14,7 +14,7 @@ import {
 import { useChatStore } from "../store";
 
 import Locale from "../locales";
-import { isMobileScreen } from "../utils";
+import { formatRelativeDateTime, isMobileScreen } from "../utils";
 import { ChatSession } from "../store/app";
 
 function getProviderByModel(model?: string) {
@@ -170,7 +170,7 @@ export function ChatList() {
               <ChatItem
                 title={item.topic}
                 model={getSessionModel(item)}
-                time={item.lastUpdate}
+                time={formatRelativeDateTime(item.lastUpdate)}
                 count={item.messages.length}
                 key={item.id}
                 id={item.id}

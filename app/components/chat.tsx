@@ -31,6 +31,7 @@ import { useScreen } from "../store/screen";
 import {
   copyToClipboard,
   downloadAs,
+  formatRelativeDateTime,
   getEmojiUrl,
   isMobileScreen,
   selectOrCopy,
@@ -1313,7 +1314,7 @@ export function Chat(props: {
                       <div className={styles["chat-message-actions"]}>
                         <div className={styles["chat-message-action-date"]}>
                           {renderModelName(message.model)}
-                          {message.date.toLocaleString()}
+                          {formatRelativeDateTime(message.date)}
                         </div>
                       </div>
                     )}
