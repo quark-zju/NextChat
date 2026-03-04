@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { persistStorage } from "./persist-storage";
 
 import { type ChatCompletionResponseMessage } from "openai";
 import {
@@ -708,6 +709,7 @@ export const useChatStore = create<ChatStore>()(
     {
       name: LOCAL_KEY,
       version: 1.5,
+      storage: createJSONStorage(() => persistStorage),
       migrate(persistedState, version) {
         const state = persistedState as ChatStore;
 

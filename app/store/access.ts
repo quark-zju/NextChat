@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { persistStorage } from "./persist-storage";
 import { queryMeta } from "../utils";
 
 export interface AccessControlStore {
@@ -33,6 +34,7 @@ export const useAccessStore = create<AccessControlStore>()(
     {
       name: ACCESS_KEY,
       version: 2,
+      storage: createJSONStorage(() => persistStorage),
       migrate(persistedState, version) {
         const state = persistedState as AccessControlStore;
         if (version < 2) {

@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { persistStorage } from "./persist-storage";
 import Fuse from "fuse.js";
 
 export interface Prompt {
@@ -84,6 +85,7 @@ export const usePromptStore = create<PromptStore>()(
     {
       name: PROMPT_KEY,
       version: 1,
+      storage: createJSONStorage(() => persistStorage),
       onRehydrateStorage(state) {},
     },
   ),

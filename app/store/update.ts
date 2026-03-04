@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { persistStorage } from "./persist-storage";
 import { FETCH_COMMIT_URL, FETCH_TAG_URL } from "../constant";
 import { getCurrentVersion } from "../utils";
 
@@ -45,6 +46,7 @@ export const useUpdateStore = create<UpdateStore>()(
     {
       name: UPDATE_KEY,
       version: 1,
+      storage: createJSONStorage(() => persistStorage),
     },
   ),
 );
