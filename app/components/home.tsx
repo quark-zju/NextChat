@@ -25,8 +25,10 @@ import { Chat } from "./chat";
 import dynamic from "next/dynamic";
 import { REPO_URL } from "../constant";
 import { ErrorBoundary } from "./error";
+import { showToast } from "./ui-lib";
 
 import { useAccessStore, AccessControlStore } from "../store";
+import { STORAGE_WARNING_EVENT } from "../store/persist-storage";
 
 export function Loading(props: { noLogo?: boolean }) {
   return (
@@ -129,6 +131,26 @@ function _Home() {
 
   useSwitchTheme();
   useCheckHash(accessStore);
+
+  useEffect(() => {
+    const onStorageWarning = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        type: "near-limit" | "full";
+      }>;
+
+      if (customEvent.detail?.type === "full") {
+        showToast(Locale.Store.StorageFull, 6000);
+        return;
+      }
+
+      showToast(Locale.Store.StorageNearLimit, 5000);
+    };
+
+    window.addEventListener(STORAGE_WARNING_EVENT, onStorageWarning);
+    return () => {
+      window.removeEventListener(STORAGE_WARNING_EVENT, onStorageWarning);
+    };
+  }, []);
 
   return (
     <div

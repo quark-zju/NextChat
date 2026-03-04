@@ -162,6 +162,8 @@ const cn = {
     DefaultTopic: "新的聊天",
     BotHello: "有什么可以帮你的吗",
     Error: "出错了，稍后重试吧",
+    StorageNearLimit: "本地存储接近上限，请尽快导出数据并清理历史记录。",
+    StorageFull: "本地存储已满，新的聊天可能无法保存。请立即导出数据并清理历史。",
     ModelPicker: {
       Title: "先选一个模型开始聊天",
       SubTitle: "不同模型风格不同，随时可在设置里再切换",
