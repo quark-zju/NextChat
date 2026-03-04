@@ -905,6 +905,7 @@ export function Chat(props: {
     session.messages.length,
     headerModelName,
   );
+  const hasMessagesToExport = session.messages.some((msg) => !msg.isError);
 
   const context: RenderMessage[] = session.context.slice();
   const compressedEndIndex = Math.max(
@@ -1023,6 +1024,7 @@ export function Chat(props: {
               icon={<ExportIcon />}
               bordered
               title={Locale.Chat.Actions.Export}
+              disabled={!hasMessagesToExport}
               onClick={() => {
                 exportMessages(
                   session.messages.filter((msg) => !msg.isError),

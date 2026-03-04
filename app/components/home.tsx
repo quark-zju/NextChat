@@ -111,15 +111,24 @@ const useCheckHash = (accessStore: AccessControlStore) => {
 };
 
 function _Home() {
-  const [createNewSession, currentIndex, removeSession, showArchived, toggleShowArchived] = useChatStore(
+  const [
+    createNewSession,
+    currentIndex,
+    removeSession,
+    showArchived,
+    toggleShowArchived,
+    currentSessionMessageCount,
+  ] = useChatStore(
     (state) => [
       state.newSession,
       state.currentSessionIndex,
       state.removeSession,
       state.showArchived,
       state.toggleShowArchived,
+      state.sessions[state.currentSessionIndex]?.messages.length ?? 0,
     ],
   );
+  const isCurrentSessionEmpty = currentSessionMessageCount === 0;
   const [showSideBar, setShowSideBar] = useState(true);
 
   // setting
@@ -234,6 +243,7 @@ function _Home() {
             <IconButton
               icon={<AddIcon />}
               text={Locale.Home.NewChat}
+              disabled={isCurrentSessionEmpty}
               onClick={() => {
                 if (showArchived) {
                   toggleShowArchived();
