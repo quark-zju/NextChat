@@ -591,6 +591,10 @@ export function Chat(props: {
     } catch (error) {
       showToast(Locale.Store.Error);
       console.error("[Image Convert]", error);
+    } finally {
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
+      }
     }
   };
 
@@ -1321,11 +1325,15 @@ export function Chat(props: {
                 />
                 <div
                   className={styles["chat-input-image-remove"]}
-                  onClick={() =>
-                    setPendingImages((prev) =>
-                      prev.filter((_, idx) => idx !== i),
-                    )
-                  }
+                  onClick={() => {
+                    setPendingImages((prev) => {
+                      const next = prev.filter((_, idx) => idx !== i);
+                      if (next.length === 0 && imageInputRef.current) {
+                        imageInputRef.current.value = "";
+                      }
+                      return next;
+                    });
+                  }}
                 >
                   ×
                 </div>
