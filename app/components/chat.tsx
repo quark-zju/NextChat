@@ -849,11 +849,11 @@ export function Chat(props: {
   const onRightClick = (e: any, message: Message) => {
     // auto fill user input
     if (message.role === "user") {
-      setUserInput(message.content);
+      setUserInput(message.content ?? "");
     }
 
     // copy to clipboard
-    if (selectOrCopy(e.currentTarget, message.content)) {
+    if (selectOrCopy(e.currentTarget, message.content ?? "")) {
       e.preventDefault();
     }
   };
@@ -865,7 +865,7 @@ export function Chat(props: {
         setIsLoading(true);
         chatStore
           .onUserInput(
-            session.messages[i].content,
+            session.messages[i].content ?? "",
             session.messages[i].imageUrls,
           )
           .then(() => setIsLoading(false));
@@ -1134,7 +1134,7 @@ export function Chat(props: {
                     {!isUser &&
                       !isModelPicker &&
                       !isCompressedSummary &&
-                      !(message.preview || message.content.length === 0) && (
+                      !((message.preview ?? "") || (message.content?.length ?? 0) === 0) && (
                         <div className={styles["chat-message-top-actions"]}>
                           {message.streaming ? (
                             <div
@@ -1154,7 +1154,7 @@ export function Chat(props: {
 
                           <div
                             className={styles["chat-message-top-action"]}
-                            onClick={() => copyToClipboard(message.content)}
+                            onClick={() => copyToClipboard(message.content ?? "")}
                           >
                             {Locale.Chat.Actions.Copy}
                           </div>
@@ -1206,7 +1206,7 @@ export function Chat(props: {
                           className="markdown-body"
                           style={{ fontSize: `${fontSize}px` }}
                         >
-                          <Markdown content={message.content} />
+                          <Markdown content={message.content ?? ""} />
                         </div>
                         <button
                           type="button"
@@ -1244,7 +1244,7 @@ export function Chat(props: {
                                         styles["chat-compressed-content"]
                                       }
                                     >
-                                      <Markdown content={m.content} />
+                                      <Markdown content={m.content ?? ""} />
                                     </div>
                                   </div>
                                 ),
@@ -1274,10 +1274,10 @@ export function Chat(props: {
                             onContextMenu={(e) => onRightClick(e, message)}
                             onDoubleClickCapture={() => {
                               if (!isMobile) return;
-                              setUserInput(message.content);
+                              setUserInput(message.content ?? "");
                             }}
                           >
-                            <Markdown content={message.content} />
+                            <Markdown content={message.content ?? ""} />
                           </div>
                         )}
                         {!isUser && hasReasoning && (
@@ -1298,7 +1298,7 @@ export function Chat(props: {
                                   styles["chat-message-reasoning-content"]
                                 }
                               >
-                                <Markdown content={message.reasoning} />
+                                <Markdown content={message.reasoning ?? ""} />
                               </div>
                             )}
                           </div>

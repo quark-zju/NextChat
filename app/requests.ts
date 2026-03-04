@@ -25,10 +25,12 @@ const makeRequestParam = (
     stream?: boolean;
   },
 ): ChatRequest => {
-  let sendMessages = messages.map((v) => {
+  let sendMessages = messages
+    .filter((m) => m.role !== "function")
+    .map((v) => {
     if (v.role !== "user" || !v.imageUrls || v.imageUrls.length === 0) {
       return {
-        role: v.role,
+        role: v.role as "system" | "user" | "assistant",
         content: v.content ?? "",
       };
     }
@@ -53,7 +55,7 @@ const makeRequestParam = (
     }
 
     return {
-      role: v.role,
+      role: v.role as "system" | "user" | "assistant",
       content: parts,
     };
   });
@@ -385,6 +387,7 @@ export async function requestWithPrompt(messages: Message[], prompt: string) {
       role: "user",
       content: prompt,
       date: new Date().toLocaleString(),
+      imageUrls: undefined,
     },
   ]);
 
