@@ -79,6 +79,22 @@ function buildTranslationFailureText(targetLanguage: string, source: string) {
 }
 
 const LIVE_SEGMENT_MAX_CHARS = 260;
+const SHORT_REASONING_SEGMENT_MIN_CHARS = 80;
+
+function isMarkdownHeaderLike(segment: string) {
+  const trimmed = segment.trim();
+  if (!trimmed) return false;
+  if (/^\*\*[^*\n]{1,120}\*\*$/.test(trimmed)) return true;
+  if (/^#{1,6}\s+\S/.test(trimmed)) return true;
+  return false;
+}
+
+function shouldHoldReasoningParagraph(segment: string) {
+  const trimmed = segment.trim();
+  if (!trimmed) return false;
+  if (isMarkdownHeaderLike(trimmed)) return true;
+  return trimmed.length < SHORT_REASONING_SEGMENT_MIN_CHARS;
+}
 
 function takeReasoningSegment(buffer: string) {
   const normalized = buffer.replace(/\r\n/g, "\n");
@@ -89,10 +105,27 @@ function takeReasoningSegment(buffer: string) {
   const paragraphMatch = normalized.match(/\n{2,}/);
   if (paragraphMatch && typeof paragraphMatch.index === "number") {
     const splitIndex = paragraphMatch.index;
-    const segment = normalized.slice(0, splitIndex).trim();
-    const rest = normalized.slice(splitIndex + paragraphMatch[0].length);
-    if (segment.length > 0) {
-      return { segment, rest };
+    const first = normalized.slice(0, splitIndex).trim();
+    const restAfterFirst = normalized.slice(splitIndex + paragraphMatch[0].length);
+
+    if (first.length > 0 && shouldHoldReasoningParagraph(first)) {
+      const secondMatch = restAfterFirst.match(/\n{2,}/);
+      if (secondMatch && typeof secondMatch.index === "number") {
+        const secondSplitIndex = secondMatch.index;
+        const second = restAfterFirst.slice(0, secondSplitIndex).trim();
+        const rest = restAfterFirst.slice(
+          secondSplitIndex + secondMatch[0].length,
+        );
+        const merged = [first, second].filter(Boolean).join("\n\n").trim();
+        if (merged.length > 0) {
+          return { segment: merged, rest };
+        }
+      }
+      return { segment: "", rest: normalized };
+    }
+
+    if (first.length > 0) {
+      return { segment: first, rest: restAfterFirst };
     }
   }
 
