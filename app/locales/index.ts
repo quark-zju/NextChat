@@ -6,7 +6,7 @@ export type { LocaleType } from "./cn";
 export const AllLangs = ["en", "cn"] as const;
 type Lang = (typeof AllLangs)[number];
 
-const LANG_KEY = "lang";
+export const LANG_KEY = "lang";
 
 function getItem(key: string) {
   try {

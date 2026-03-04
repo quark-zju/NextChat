@@ -1,4 +1,11 @@
-import { useState, useEffect, useMemo, HTMLProps } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  HTMLProps,
+  ChangeEvent,
+} from "react";
 
 import EmojiPicker, {
   EmojiStyle,
@@ -10,6 +17,8 @@ import styles from "./settings.module.scss";
 import ResetIcon from "../icons/reload.svg";
 import CloseIcon from "../icons/close.svg";
 import ClearIcon from "../icons/clear.svg";
+import ExportIcon from "../icons/export.svg";
+import DownloadIcon from "../icons/download.svg";
 import EditIcon from "../icons/edit.svg";
 import EyeIcon from "../icons/eye.svg";
 import EyeOffIcon from "../icons/eye-off.svg";
@@ -20,14 +29,18 @@ import { IconButton } from "./button";
 import {
   SubmitKey,
   useChatStore,
+  CHAT_STORE_KEY,
   Theme,
   useUpdateStore,
   useAccessStore,
   ModalConfigValidator,
 } from "../store";
+import { ACCESS_KEY } from "../store/access";
+import { PROMPT_KEY } from "../store/prompt";
+import { UPDATE_KEY } from "../store/update";
 import { Avatar } from "./chat";
 
-import Locale, { AllLangs, changeLang, getLang } from "../locales";
+import Locale, { AllLangs, changeLang, getLang, LANG_KEY } from "../locales";
 import { getCurrentVersion, getEmojiUrl } from "../utils";
 import Link from "next/link";
 import { UPDATE_URL } from "../constant";
@@ -72,8 +85,24 @@ function PasswordInput(props: HTMLProps<HTMLInputElement>) {
   );
 }
 
+type StorageBackupPayload = {
+  format: "nextchat-localstorage-backup";
+  version: 1;
+  exportedAt: string;
+  data: Record<string, string>;
+};
+
+const BACKUP_KEYS = [
+  CHAT_STORE_KEY,
+  ACCESS_KEY,
+  PROMPT_KEY,
+  UPDATE_KEY,
+  LANG_KEY,
+];
+
 export function Settings(props: { closeSettings: () => void }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const importFileRef = useRef<HTMLInputElement>(null);
   const [config, updateConfig, resetConfig, clearAllData, clearSessions] =
     useChatStore((state) => [
       state.config,
@@ -132,6 +161,98 @@ export function Settings(props: { closeSettings: () => void }) {
     */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function exportAllState() {
+    const data: Record<string, string> = {};
+
+    BACKUP_KEYS.forEach((key) => {
+      const value = localStorage.getItem(key);
+      if (value !== null) {
+        data[key] = value;
+      }
+    });
+
+    const payload: StorageBackupPayload = {
+      format: "nextchat-localstorage-backup",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data,
+    };
+
+    const timestamp = payload.exportedAt.replace(/[:.]/g, "-");
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `nextchat-backup-${timestamp}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    showToast(Locale.Settings.DataMigration.ExportSuccess);
+  }
+
+  function parseBackupPayload(rawData: string): StorageBackupPayload | null {
+    try {
+      const parsed = JSON.parse(rawData) as Partial<StorageBackupPayload>;
+      if (
+        parsed.format !== "nextchat-localstorage-backup" ||
+        parsed.version !== 1 ||
+        !parsed.data ||
+        typeof parsed.data !== "object" ||
+        Array.isArray(parsed.data)
+      ) {
+        return null;
+      }
+
+      const normalizedData: Record<string, string> = {};
+      for (const [key, value] of Object.entries(parsed.data)) {
+        if (typeof value === "string") {
+          normalizedData[key] = value;
+        }
+      }
+
+      return {
+        format: "nextchat-localstorage-backup",
+        version: 1,
+        exportedAt:
+          typeof parsed.exportedAt === "string"
+            ? parsed.exportedAt
+            : new Date().toISOString(),
+        data: normalizedData,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  async function importAllState(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const parsed = parseBackupPayload(await file.text());
+    if (!parsed) {
+      showToast(Locale.Settings.DataMigration.ImportFailed);
+      event.target.value = "";
+      return;
+    }
+
+    BACKUP_KEYS.forEach((key) => localStorage.removeItem(key));
+    Object.entries(parsed.data).forEach(([key, value]) => {
+      localStorage.setItem(key, value);
+    });
+
+    showToast(Locale.Settings.DataMigration.ImportSuccess);
+    event.target.value = "";
+
+    setTimeout(() => {
+      location.reload();
+    }, 150);
+  }
 
   return (
     <ErrorBoundary>
@@ -277,6 +398,31 @@ export function Settings(props: { closeSettings: () => void }) {
                 </option>
               ))}
             </select>
+          </SettingItem>
+
+          <SettingItem
+            title={Locale.Settings.DataMigration.Title}
+            subTitle={Locale.Settings.DataMigration.SubTitle}
+          >
+            <div className={styles["data-actions"]}>
+              <input
+                ref={importFileRef}
+                type="file"
+                accept=".json,application/json"
+                onChange={importAllState}
+                className={styles["hidden-file-input"]}
+              />
+              <IconButton
+                icon={<ExportIcon />}
+                text={Locale.Settings.DataMigration.Export}
+                onClick={exportAllState}
+              />
+              <IconButton
+                icon={<DownloadIcon />}
+                text={Locale.Settings.DataMigration.Import}
+                onClick={() => importFileRef.current?.click()}
+              />
+            </div>
           </SettingItem>
 
           <SettingItem

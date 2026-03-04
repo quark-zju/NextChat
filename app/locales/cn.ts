@@ -105,6 +105,15 @@ const cn = {
     },
     SendKey: "发送键",
     Theme: "主题",
+    DataMigration: {
+      Title: "导入/导出所有聊天",
+      SubTitle: "将本地聊天状态备份为 JSON，或从备份恢复",
+      Export: "导出",
+      Import: "导入",
+      ExportSuccess: "导出成功",
+      ImportSuccess: "导入成功，正在刷新",
+      ImportFailed: "导入失败，文件格式无效",
+    },
     TightBorder: "紧凑边框",
     SendPreviewBubble: "发送预览气泡",
     Prompt: {

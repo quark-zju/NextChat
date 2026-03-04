@@ -253,7 +253,7 @@ function countMessagesForCompression(msgs: Message[]) {
   return msgs.reduce((pre, cur) => pre + (cur.content?.length ?? 0), 0);
 }
 
-const LOCAL_KEY = "chat-next-web-store";
+export const CHAT_STORE_KEY = "chat-next-web-store";
 
 export const useChatStore = create<ChatStore>()(
   persist(
@@ -730,7 +730,7 @@ export const useChatStore = create<ChatStore>()(
       },
     }),
     {
-      name: LOCAL_KEY,
+      name: CHAT_STORE_KEY,
       version: 1.5,
       storage: createJSONStorage(() => persistStorage),
       migrate(persistedState, version) {
