@@ -24,6 +24,8 @@ const cn = {
       Stop: "停止",
       Retry: "重试",
       UploadImage: "上传图片",
+      TakePhoto: "拍照",
+      ChooseFromAlbum: "从相册上传",
       ShowReasoning: "查看思考过程",
       HideReasoning: "收起思考过程",
     },

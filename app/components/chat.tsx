@@ -683,6 +683,7 @@ export function Chat(props: {
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const exportCaptureRef = useRef<HTMLDivElement>(null);
   const [userInput, setUserInput] = useState("");
   const [pendingImages, setPendingImages] = useState<string[]>([]);
@@ -751,6 +752,15 @@ export function Chat(props: {
     return canvas.toDataURL("image/jpeg", 0.82);
   };
 
+  const clearImageInputValues = () => {
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
+  };
+
   const onPickImages = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
@@ -762,10 +772,42 @@ export function Chat(props: {
       showToast(Locale.Store.Error);
       console.error("[Image Convert]", error);
     } finally {
-      if (imageInputRef.current) {
-        imageInputRef.current.value = "";
-      }
+      clearImageInputValues();
     }
+  };
+
+  const openImagePicker = () => {
+    if (!isMobile) {
+      imageInputRef.current?.click();
+      return;
+    }
+
+    let closeModal = () => {};
+    closeModal = showModal({
+      title: Locale.Chat.Actions.UploadImage,
+      actions: [
+        <IconButton
+          key="take-photo"
+          icon={<CameraIcon />}
+          bordered
+          text={Locale.Chat.Actions.TakePhoto}
+          onClick={() => {
+            closeModal();
+            cameraInputRef.current?.click();
+          }}
+        />,
+        <IconButton
+          key="choose-album"
+          icon={<AddIcon />}
+          bordered
+          text={Locale.Chat.Actions.ChooseFromAlbum}
+          onClick={() => {
+            closeModal();
+            imageInputRef.current?.click();
+          }}
+        />,
+      ],
+    });
   };
 
   const scrollInput = () => {
@@ -810,9 +852,7 @@ export function Chat(props: {
     setUserInput("");
     setPendingImages([]);
     setPromptHints([]);
-    if (imageInputRef.current) {
-      imageInputRef.current.value = "";
-    }
+    clearImageInputValues();
     if (!isMobile) inputRef.current?.focus();
     setAutoScroll(true);
   };
@@ -1342,8 +1382,8 @@ export function Chat(props: {
                   onClick={() => {
                     setPendingImages((prev) => {
                       const next = prev.filter((_, idx) => idx !== i);
-                      if (next.length === 0 && imageInputRef.current) {
-                        imageInputRef.current.value = "";
+                      if (next.length === 0) {
+                        clearImageInputValues();
                       }
                       return next;
                     });
@@ -1360,6 +1400,14 @@ export function Chat(props: {
             ref={imageInputRef}
             type="file"
             accept="image/*"
+            multiple
+            className={styles["chat-image-input"]}
+            onChange={(e) => onPickImages(e.currentTarget.files)}
+          />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
             capture="environment"
             multiple
             className={styles["chat-image-input"]}
@@ -1368,7 +1416,7 @@ export function Chat(props: {
           <IconButton
             icon={<CameraIcon />}
             className={styles["chat-image-picker"]}
-            onClick={() => imageInputRef.current?.click()}
+            onClick={openImagePicker}
             title={Locale.Chat.Actions.UploadImage}
           />
           <TextareaAutosize

@@ -21,6 +21,8 @@ const en: LocaleType = {
       Stop: "Stop",
       Retry: "Retry",
       UploadImage: "Upload image",
+      TakePhoto: "Take photo",
+      ChooseFromAlbum: "Choose from album",
       ShowReasoning: "Show reasoning",
       HideReasoning: "Hide reasoning",
     },
