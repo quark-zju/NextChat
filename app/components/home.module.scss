@@ -87,6 +87,25 @@
   .mobile {
     display: block;
   }
+
+  .chat-item {
+    padding-right: 64px;
+  }
+
+  .chat-item > .chat-item-delete {
+    opacity: 0.7;
+    right: 10px;
+  }
+
+  .chat-item > .chat-item-archive {
+    opacity: 0.7;
+    right: 36px;
+  }
+
+  .chat-item > .chat-item-delete:hover,
+  .chat-item > .chat-item-archive:hover {
+    opacity: 1;
+  }
 }
 
 .sidebar-header {
