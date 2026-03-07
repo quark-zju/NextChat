@@ -14,7 +14,6 @@ import ArchiveIcon from "../icons/archive.svg";
 import BotIcon from "../icons/bot.svg";
 import AddIcon from "../icons/add.svg";
 import LoadingIcon from "../icons/three-dots.svg";
-import CloseIcon from "../icons/close.svg";
 
 import { useChatStore } from "../store";
 import { useScreen } from "../store/screen";
@@ -113,16 +112,12 @@ const useCheckHash = (accessStore: AccessControlStore) => {
 function _Home() {
   const [
     createNewSession,
-    currentIndex,
-    removeSession,
     showArchived,
     toggleShowArchived,
     currentSessionMessageCount,
   ] = useChatStore(
     (state) => [
       state.newSession,
-      state.currentSessionIndex,
-      state.removeSession,
       state.showArchived,
       state.toggleShowArchived,
       state.sessions[state.currentSessionIndex]?.messages.length ?? 0,
@@ -192,16 +187,6 @@ function _Home() {
 
         <div className={styles["sidebar-tail"]}>
           <div className={styles["sidebar-actions"]}>
-            <div className={styles["sidebar-action"] + " " + styles.mobile}>
-              <IconButton
-                icon={<CloseIcon />}
-                onClick={() => {
-                  if (confirm(Locale.Home.DeleteChat)) {
-                    removeSession(currentIndex);
-                  }
-                }}
-              />
-            </div>
             <div className={styles["sidebar-action"]}>
               <IconButton
                 icon={<SettingsIcon />}
