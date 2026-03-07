@@ -14,7 +14,7 @@ import {
 import { useChatStore } from "../store";
 
 import Locale from "../locales";
-import { formatRelativeDateTime, isMobileScreen } from "../utils";
+import { formatRelativeDateTime } from "../utils";
 import { ChatSession } from "../store/app";
 
 function getProviderByModel(model?: string) {
@@ -190,13 +190,12 @@ export function ChatList() {
                     : archiveSession(sessionIndex)
                 }
                 onDelete={() =>
-                  (!isMobileScreen() ||
-                    confirm(
-                      Locale.Home.DeleteChat(
-                        item.topic || Locale.Store.DefaultTopic,
-                        item.messages.length,
-                      ),
-                    )) &&
+                  confirm(
+                    Locale.Home.DeleteChat(
+                      item.topic || Locale.Store.DefaultTopic,
+                      item.messages.length,
+                    ),
+                  ) &&
                   removeSession(sessionIndex)
                 }
               />
