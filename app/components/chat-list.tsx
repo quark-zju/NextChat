@@ -190,7 +190,13 @@ export function ChatList() {
                     : archiveSession(sessionIndex)
                 }
                 onDelete={() =>
-                  (!isMobileScreen() || confirm(Locale.Home.DeleteChat)) &&
+                  (!isMobileScreen() ||
+                    confirm(
+                      Locale.Home.DeleteChat(
+                        item.topic || Locale.Store.DefaultTopic,
+                        item.messages.length,
+                      ),
+                    )) &&
                   removeSession(sessionIndex)
                 }
               />

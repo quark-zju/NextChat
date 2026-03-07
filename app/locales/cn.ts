@@ -70,7 +70,8 @@ const cn = {
   },
   Home: {
     NewChat: "新的聊天",
-    DeleteChat: "确认删除选中的对话？",
+    DeleteChat: (title: string, count: number) =>
+      `确认删除对话「${title}」吗？共 ${count} 条对话。`,
     ArchiveChat: "归档对话",
     UnarchiveChat: "取消归档",
     ViewArchivedChats: "查看归档对话",

@@ -66,7 +66,8 @@ const en: LocaleType = {
   },
   Home: {
     NewChat: "New Chat",
-    DeleteChat: "Confirm to delete the selected conversation?",
+    DeleteChat: (title: string, count: number) =>
+      `Delete conversation "${title}" with ${count} messages?`,
     ArchiveChat: "Archive chat",
     UnarchiveChat: "Unarchive chat",
     ViewArchivedChats: "View archived chats",
