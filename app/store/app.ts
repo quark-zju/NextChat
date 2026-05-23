@@ -128,7 +128,7 @@ export const ModalConfigValidator = {
 
 const DEFAULT_CONFIG: ChatConfig = {
   historyMessageCount: 4,
-  compressMessageLengthThreshold: 1000,
+  compressMessageLengthThreshold: 50000,
   sendBotMessages: true as boolean,
   submitKey: SubmitKey.Enter as SubmitKey,
   avatar: "1f603",
@@ -677,7 +677,12 @@ export const useChatStore = create<ChatStore>()(
           config.compressMessageLengthThreshold,
         );
 
-        if (historyMsgLength > config.compressMessageLengthThreshold) {
+        const compressionThreshold = Math.max(
+          config.compressMessageLengthThreshold,
+          20000,
+        );
+
+        if (historyMsgLength > compressionThreshold) {
           requestChatStream(
             toBeSummarizedMsgs.concat({
               role: "system",
@@ -731,7 +736,7 @@ export const useChatStore = create<ChatStore>()(
     }),
     {
       name: CHAT_STORE_KEY,
-      version: 1.5,
+      version: 1.6,
       storage: createJSONStorage(() => persistStorage),
       migrate(persistedState, version) {
         const state = persistedState as ChatStore;
@@ -766,6 +771,12 @@ export const useChatStore = create<ChatStore>()(
             state.config.modelConfig.max_tokens <= 8000
           ) {
             state.config.modelConfig.max_tokens = 8000;
+          }
+        }
+
+        if (version < 1.6) {
+          if (state.config.compressMessageLengthThreshold < 50000) {
+            state.config.compressMessageLengthThreshold = 50000;
           }
         }
 
