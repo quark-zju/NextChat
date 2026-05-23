@@ -33,7 +33,6 @@ if command -v bwrap >/dev/null 2>&1; then
     --ro-bind /lib64 /lib64 \
     --ro-bind /etc /etc \
     --ro-bind /run/resolvconf /run/resolvconf \
-    --ro-bind /opt /opt \
     --bind "$PWD" "$PWD" \
     --chdir "$PWD" \
     --bind "$TMP_ROOT" "$TMP_ROOT" \
