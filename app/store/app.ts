@@ -87,7 +87,7 @@ export const ALL_MODELS = [
     available: true,
   },
   {
-    name: "openai/gpt-5.2",
+    name: "openai/gpt-5.5",
     available: true,
   },
 ];
