@@ -180,13 +180,13 @@ const en: LocaleType = {
       "Local storage is full. New chats may not be saved. Export data and clean up now.",
     ModelPicker: {
       Title: "Pick a model to start",
-      SubTitle: "Each model has different capabilities and style. Please select:",
+      SubTitle:
+        "Each model has different capabilities and style. Please select:",
       Selected: (name: string) => `Switched to ${name}`,
       Claude:
         "From Anthropic. More human, great for communication and rewriting.",
       GPT: "From OpenAI. Neutral and steady, good for general tasks.",
-      Gemini:
-        "From Google. Strong in STEM and visual analysis.",
+      Gemini: "From Google. Strong in STEM and visual analysis.",
     },
     Prompt: {
       History: (content: string) =>

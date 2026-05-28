@@ -469,9 +469,7 @@ export const useChatStore = create<ChatStore>()(
           .find((m) => m.role === "assistant" && !!m.model)?.model;
         const shouldKeepSessionModel =
           !!latestSessionModel &&
-          ALL_MODELS.some(
-            (m) => m.name === latestSessionModel && m.available,
-          );
+          ALL_MODELS.some((m) => m.name === latestSessionModel && m.available);
         const resolvedModel = shouldKeepSessionModel
           ? latestSessionModel
           : limitModel(config.modelConfig.model);
@@ -639,11 +637,9 @@ export const useChatStore = create<ChatStore>()(
           session.lastTopicUpdateIndex = session.messages.length;
           requestWithPrompt(session.messages, Locale.Store.Prompt.Topic).then(
             (res) => {
-              get().updateCurrentSession(
-                (session) => {
-                  session.topic = res ? trimTopic(res) : DEFAULT_TOPIC;
-                },
-              );
+              get().updateCurrentSession((session) => {
+                session.topic = res ? trimTopic(res) : DEFAULT_TOPIC;
+              });
             },
           );
         }
@@ -656,9 +652,7 @@ export const useChatStore = create<ChatStore>()(
         const historyMsgLength =
           countMessagesForCompression(toBeSummarizedMsgs);
 
-        if (
-          historyMsgLength > 10000
-        ) {
+        if (historyMsgLength > 10000) {
           const n = toBeSummarizedMsgs.length;
           toBeSummarizedMsgs = toBeSummarizedMsgs.slice(
             Math.max(0, n - config.historyMessageCount),
@@ -695,7 +689,9 @@ export const useChatStore = create<ChatStore>()(
               onMessage(message, done) {
                 set(() => {
                   const sessions = get().sessions;
-                  const targetSession = sessions.find((s) => s.id === sessionId);
+                  const targetSession = sessions.find(
+                    (s) => s.id === sessionId,
+                  );
                   if (!targetSession) return {};
                   targetSession.memoryPrompt = message;
                   if (done) {
@@ -715,7 +711,7 @@ export const useChatStore = create<ChatStore>()(
 
       updateStat(message) {
         get().updateCurrentSession((session) => {
-          session.stat.charCount += (message.content ?? '').length;
+          session.stat.charCount += (message.content ?? "").length;
           // TODO: should update chat count and word count
         });
       },

@@ -88,7 +88,11 @@ export function ChatItem(props: {
           </div>
           <div
             className={styles["chat-item-archive"]}
-            title={props.archived ? Locale.Home.UnarchiveChat : Locale.Home.ArchiveChat}
+            title={
+              props.archived
+                ? Locale.Home.UnarchiveChat
+                : Locale.Home.ArchiveChat
+            }
             onClick={(e) => {
               e.stopPropagation();
               props.onArchive?.();
@@ -121,17 +125,16 @@ export function ChatList() {
     archiveSession,
     unarchiveSession,
     moveSession,
-  ] =
-    useChatStore((state) => [
-      state.sessions,
-      state.currentSessionIndex,
-      state.showArchived,
-      state.selectSession,
-      state.removeSession,
-      state.archiveSession,
-      state.unarchiveSession,
-      state.moveSession,
-    ]);
+  ] = useChatStore((state) => [
+    state.sessions,
+    state.currentSessionIndex,
+    state.showArchived,
+    state.selectSession,
+    state.removeSession,
+    state.archiveSession,
+    state.unarchiveSession,
+    state.moveSession,
+  ]);
 
   const visibleSessions = sessions
     .map((session, index) => ({ session, index }))
@@ -172,34 +175,35 @@ export function ChatList() {
                   : Locale.Home.EmptyActiveChats}
               </div>
             )}
-            {visibleSessions.map(({ session: item, index: sessionIndex }, i) => (
-              <ChatItem
-                title={item.topic}
-                model={getSessionModel(item)}
-                time={formatRelativeDateTime(item.lastUpdate)}
-                count={item.messages.length}
-                key={item.id}
-                id={item.id}
-                index={i}
-                archived={!!item.archived}
-                selected={sessionIndex === selectedIndex}
-                onClick={() => selectSession(sessionIndex)}
-                onArchive={() =>
-                  item.archived
-                    ? unarchiveSession(sessionIndex)
-                    : archiveSession(sessionIndex)
-                }
-                onDelete={() =>
-                  confirm(
-                    Locale.Home.DeleteChat(
-                      item.topic || Locale.Store.DefaultTopic,
-                      item.messages.length,
-                    ),
-                  ) &&
-                  removeSession(sessionIndex)
-                }
-              />
-            ))}
+            {visibleSessions.map(
+              ({ session: item, index: sessionIndex }, i) => (
+                <ChatItem
+                  title={item.topic}
+                  model={getSessionModel(item)}
+                  time={formatRelativeDateTime(item.lastUpdate)}
+                  count={item.messages.length}
+                  key={item.id}
+                  id={item.id}
+                  index={i}
+                  archived={!!item.archived}
+                  selected={sessionIndex === selectedIndex}
+                  onClick={() => selectSession(sessionIndex)}
+                  onArchive={() =>
+                    item.archived
+                      ? unarchiveSession(sessionIndex)
+                      : archiveSession(sessionIndex)
+                  }
+                  onDelete={() =>
+                    confirm(
+                      Locale.Home.DeleteChat(
+                        item.topic || Locale.Store.DefaultTopic,
+                        item.messages.length,
+                      ),
+                    ) && removeSession(sessionIndex)
+                  }
+                />
+              ),
+            )}
             {provided.placeholder}
           </div>
         )}

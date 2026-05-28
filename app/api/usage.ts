@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-const usageLimitFile = 'state/usage-limit';
+const usageLimitFile = "state/usage-limit";
 const defaultUsageLimit = 1001;
 
 function loadUsageLimit(): number {
@@ -8,7 +8,7 @@ function loadUsageLimit(): number {
     return parseInt(fs.readlinkSync(usageLimitFile));
   } catch (e) {
     // @ts-ignore
-    if (e?.code === 'ENOENT') {
+    if (e?.code === "ENOENT") {
       return defaultUsageLimit;
     }
     throw e;
@@ -17,10 +17,10 @@ function loadUsageLimit(): number {
 
 function saveUsageLimit(limit: number) {
   try {
-    fs.symlinkSync(limit.toString(), usageLimitFile)
+    fs.symlinkSync(limit.toString(), usageLimitFile);
   } catch (e) {
     // @ts-ignore
-    if (e?.code === 'EEXIST') {
+    if (e?.code === "EEXIST") {
       fs.unlinkSync(usageLimitFile);
       fs.symlinkSync(limit.toString(), usageLimitFile);
     } else {
@@ -35,7 +35,7 @@ export function getUsageRemaining(): number {
   if (usage == null) {
     usage = loadUsageLimit();
   }
-  console.log('[Usage] remaining:', usage);
+  console.log("[Usage] remaining:", usage);
   if (usage > 0) {
     usage -= 1;
     saveUsageLimit(usage);

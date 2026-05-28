@@ -115,14 +115,12 @@ function _Home() {
     showArchived,
     toggleShowArchived,
     currentSessionMessageCount,
-  ] = useChatStore(
-    (state) => [
-      state.newSession,
-      state.showArchived,
-      state.toggleShowArchived,
-      state.sessions[state.currentSessionIndex]?.messages.length ?? 0,
-    ],
-  );
+  ] = useChatStore((state) => [
+    state.newSession,
+    state.showArchived,
+    state.toggleShowArchived,
+    state.sessions[state.currentSessionIndex]?.messages.length ?? 0,
+  ]);
   const isCurrentSessionEmpty = currentSessionMessageCount === 0;
   const [showSideBar, setShowSideBar] = useState(true);
 

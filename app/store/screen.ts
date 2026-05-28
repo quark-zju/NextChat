@@ -6,13 +6,13 @@ interface Screen {
   update: () => void;
 }
 
-export const useScreen = create<Screen>(set => {
+export const useScreen = create<Screen>((set) => {
   const state = {
     isMobile: isMobileScreen(),
     update: () => set({ isMobile: isMobileScreen() }),
   };
   if (typeof window !== "undefined") {
-    window.addEventListener("resize", e => {
+    window.addEventListener("resize", (e) => {
       state.update();
     });
   }

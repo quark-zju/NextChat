@@ -5,7 +5,10 @@ import type { ReplayPayload, ReplayRequest } from "../replay-shared";
 export async function GET(req: NextRequest) {
   const key = req.nextUrl.searchParams.get("key");
   if (!key) {
-    return NextResponse.json({ error: true, msg: "missing key" }, { status: 400 });
+    return NextResponse.json(
+      { error: true, msg: "missing key" },
+      { status: 400 },
+    );
   }
 
   try {

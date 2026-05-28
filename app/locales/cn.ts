@@ -34,7 +34,7 @@ const cn = {
     Thinking: "正在思考…",
     Input: (submitKey: string, isMobile: boolean) => {
       if (isMobile) {
-        return '输入消息';
+        return "输入消息";
       }
       let inputHints = `输入消息，${submitKey} 发送`;
       if (submitKey === String(SubmitKey.Enter)) {
@@ -58,8 +58,7 @@ const cn = {
     Title: "上下文记忆",
     EmptyContent: "尚未记忆",
     CompressedToast: "对话已压缩，点击查看",
-    CompressedNotice:
-      "对话已压缩。AI 只能看到压缩内容，看不到完整历史对话。",
+    CompressedNotice: "对话已压缩。AI 只能看到压缩内容，看不到完整历史对话。",
     ExpandCompressed: "展开对话",
     CollapseCompressed: "收起对话",
     EmptyCompressedHistory: "没有可展示的被压缩对话。",
@@ -178,7 +177,8 @@ const cn = {
     BotHello: "有什么可以帮你的吗",
     Error: "出错了，稍后重试吧",
     StorageNearLimit: "本地存储接近上限，请尽快导出数据并清理历史记录。",
-    StorageFull: "本地存储已满，新的聊天可能无法保存。请立即导出数据并清理历史。",
+    StorageFull:
+      "本地存储已满，新的聊天可能无法保存。请立即导出数据并清理历史。",
     ModelPicker: {
       Title: "先选一个模型开始聊天",
       SubTitle: "不同模型能力和风格不同，请选择：",

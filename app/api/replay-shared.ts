@@ -33,13 +33,16 @@ function normalizeRequestBody(raw: unknown): ReplayRequest | null {
     messages: body.messages as ChatRequest["messages"],
     temperature:
       typeof body.temperature === "number" ? body.temperature : undefined,
-    max_tokens: typeof body.max_tokens === "number" ? body.max_tokens : undefined,
+    max_tokens:
+      typeof body.max_tokens === "number" ? body.max_tokens : undefined,
     max_completion_tokens:
       typeof body.max_completion_tokens === "number"
         ? body.max_completion_tokens
         : undefined,
     presence_penalty:
-      typeof body.presence_penalty === "number" ? body.presence_penalty : undefined,
+      typeof body.presence_penalty === "number"
+        ? body.presence_penalty
+        : undefined,
   };
 }
 

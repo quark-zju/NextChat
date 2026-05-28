@@ -42,6 +42,6 @@ export const useAccessStore = create<AccessControlStore>()(
         }
         return state;
       },
-    }
-  )
+    },
+  ),
 );

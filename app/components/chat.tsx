@@ -170,10 +170,7 @@ function downloadDataUrl(dataUrl: string, filename: string) {
   document.body.removeChild(element);
 }
 
-function inlineComputedStyles(
-  source: HTMLElement,
-  target: HTMLElement,
-) {
+function inlineComputedStyles(source: HTMLElement, target: HTMLElement) {
   const computed = window.getComputedStyle(source);
   const styleText = Array.from(computed)
     .map((name) => `${name}: ${computed.getPropertyValue(name)};`)
@@ -218,7 +215,9 @@ async function renderNodeSliceToPng(
   inlineComputedStyles(node, cloned);
   cloned.style.margin = "0";
   cloned.style.width = `${width}px`;
-  cloned.style.transform = `translate(${paddingX}px, ${paddingTop - offsetY}px)`;
+  cloned.style.transform = `translate(${paddingX}px, ${
+    paddingTop - offsetY
+  }px)`;
   cloned.style.transformOrigin = "top left";
   wrapper.appendChild(cloned);
 
@@ -278,17 +277,11 @@ async function buildBubbleScreenshotPages(node: HTMLElement) {
     const sliceHeight = Math.min(maxSliceHeight, totalHeight - offsetY);
     const isFirst = offsetY === 0;
     const isLast = offsetY + sliceHeight >= totalHeight;
-    const page = await renderNodeSliceToPng(
-      node,
-      width,
-      offsetY,
-      sliceHeight,
-      {
-        paddingX,
-        paddingTop: isFirst ? edgePaddingY : 0,
-        paddingBottom: isLast ? edgePaddingY : 0,
-      },
-    );
+    const page = await renderNodeSliceToPng(node, width, offsetY, sliceHeight, {
+      paddingX,
+      paddingTop: isFirst ? edgePaddingY : 0,
+      paddingBottom: isLast ? edgePaddingY : 0,
+    });
     pages.push(page);
   }
 
@@ -1097,270 +1090,290 @@ export function Chat(props: {
         <div ref={exportCaptureRef}>
           <AnimatedReorderGroup animationDuration={220} animationMinPixel={2}>
             {messages.map((message, i) => {
-            const isUser = message.role === "user";
-            const isCompressedSummary = !!message.compressedSummary;
-            const isModelPicker =
-              !isUser &&
-              message.content === BOT_HELLO.content &&
-              session.messages.length === 0;
-            const hasAssistantText =
-              typeof message.content === "string" &&
-              message.content.trim().length > 0;
-            const hasReasoning = (message.reasoning?.trim().length ?? 0) > 0;
-            const reasoningVisible =
-              !!reasoningVisibility[getReasoningKey(message)];
-            const isThinking =
-              !isUser && !!message.streaming && !hasAssistantText;
-            const isReasoningOnlyStreaming =
-              !isUser &&
-              !!message.streaming &&
-              !hasAssistantText &&
-              hasReasoning &&
-              !isModelPicker &&
-              !isCompressedSummary;
-            const thinkingPreview =
-              getReasoningStreamSegment(message.id) ||
-              getLastReasoningSegment(message.reasoning ?? "");
-            const showInlineThinkingDuringLoading =
-              isReasoningOnlyStreaming && thinkingPreview.trim().length > 0;
-            const showLoadingOnly =
-              (message.preview || !hasAssistantText) &&
-              !isUser &&
-              !isModelPicker;
-            const reorderId = getMessageReorderId(message, i);
-            const avatarReorderId = reorderId ? `avatar:${reorderId}` : undefined;
-            const renderKey = reorderId ?? `static:${session.id}:${i}`;
+              const isUser = message.role === "user";
+              const isCompressedSummary = !!message.compressedSummary;
+              const isModelPicker =
+                !isUser &&
+                message.content === BOT_HELLO.content &&
+                session.messages.length === 0;
+              const hasAssistantText =
+                typeof message.content === "string" &&
+                message.content.trim().length > 0;
+              const hasReasoning = (message.reasoning?.trim().length ?? 0) > 0;
+              const reasoningVisible =
+                !!reasoningVisibility[getReasoningKey(message)];
+              const isThinking =
+                !isUser && !!message.streaming && !hasAssistantText;
+              const isReasoningOnlyStreaming =
+                !isUser &&
+                !!message.streaming &&
+                !hasAssistantText &&
+                hasReasoning &&
+                !isModelPicker &&
+                !isCompressedSummary;
+              const thinkingPreview =
+                getReasoningStreamSegment(message.id) ||
+                getLastReasoningSegment(message.reasoning ?? "");
+              const showInlineThinkingDuringLoading =
+                isReasoningOnlyStreaming && thinkingPreview.trim().length > 0;
+              const showLoadingOnly =
+                (message.preview || !hasAssistantText) &&
+                !isUser &&
+                !isModelPicker;
+              const reorderId = getMessageReorderId(message, i);
+              const avatarReorderId = reorderId
+                ? `avatar:${reorderId}`
+                : undefined;
+              const renderKey = reorderId ?? `static:${session.id}:${i}`;
 
-            return (
-              <div
-                key={renderKey}
-                className={
-                  isUser ? styles["chat-message-user"] : styles["chat-message"]
-                }
-              >
+              return (
                 <div
-                  className={`${styles["chat-message-container"]} ${
-                    isCompressedSummary
-                      ? styles["chat-message-container-full"]
-                      : ""
-                  }`}
+                  key={renderKey}
+                  className={
+                    isUser
+                      ? styles["chat-message-user"]
+                      : styles["chat-message"]
+                  }
                 >
-                  {!isCompressedSummary && (
-                    <div
-                      className={styles["chat-message-avatar"]}
-                      data-reorder-id={avatarReorderId}
-                    >
-                      <Avatar role={message.role} model={message.model} />
-                      {(message.preview || message.streaming) && (
-                        <div className={styles["chat-message-status"]}>
-                          {isThinking
-                            ? Locale.Chat.Thinking
-                            : Locale.Chat.Typing}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {showInlineThinkingDuringLoading && (
-                    <div className={styles["chat-thinking-inline"]}>
-                      <div className={styles["chat-thinking-inline-content"]}>
-                        <Markdown content={thinkingPreview} />
-                      </div>
-                    </div>
-                  )}
                   <div
-                    className={styles["chat-message-item"]}
-                    data-reorder-id={reorderId}
+                    className={`${styles["chat-message-container"]} ${
+                      isCompressedSummary
+                        ? styles["chat-message-container-full"]
+                        : ""
+                    }`}
                   >
-                    {!isUser &&
-                      !isModelPicker &&
-                      !isCompressedSummary &&
-                      !((message.preview ?? "") || (message.content?.length ?? 0) === 0) && (
-                        <div className={styles["chat-message-top-actions"]}>
-                          {message.streaming ? (
-                            <div
-                              className={styles["chat-message-top-action"]}
-                              onClick={() => onUserStop(message.id ?? i)}
-                            >
-                              {Locale.Chat.Actions.Stop}
-                            </div>
-                          ) : (
-                            <div
-                              className={styles["chat-message-top-action"]}
-                              onClick={() => onResend(message.sourceIndex ?? i)}
-                            >
-                              {Locale.Chat.Actions.Retry}
-                            </div>
-                          )}
-
-                          <div
-                            className={styles["chat-message-top-action"]}
-                            onClick={() => copyToClipboard(message.content ?? "")}
-                          >
-                            {Locale.Chat.Actions.Copy}
+                    {!isCompressedSummary && (
+                      <div
+                        className={styles["chat-message-avatar"]}
+                        data-reorder-id={avatarReorderId}
+                      >
+                        <Avatar role={message.role} model={message.model} />
+                        {(message.preview || message.streaming) && (
+                          <div className={styles["chat-message-status"]}>
+                            {isThinking
+                              ? Locale.Chat.Thinking
+                              : Locale.Chat.Typing}
                           </div>
-                        </div>
-                      )}
-                    {showLoadingOnly ? (
-                      <LoadingIcon />
-                    ) : isModelPicker ? (
-                      <div className={styles["model-picker"]}>
-                        <div className={styles["model-picker-title"]}>
-                          {Locale.Store.ModelPicker.Title}
-                        </div>
-                        <div className={styles["model-picker-subtitle"]}>
-                          {Locale.Store.ModelPicker.SubTitle}
-                        </div>
-                        <div className={styles["model-picker-list"]}>
-                          {ALL_MODELS.filter((m) => m.available).map((m) => {
-                            const selected =
-                              config.modelConfig.model === m.name;
-                            return (
-                              <div
-                                key={m.name}
-                                className={
-                                  styles["model-picker-item"] +
-                                  " " +
-                                  (selected
-                                    ? styles["model-picker-item-selected"]
-                                    : "")
-                                }
-                                onClick={() => onSelectModelForNewChat(m.name)}
-                              >
-                                <div className={styles["model-picker-name"]}>
-                                  {getCompactModelName(m.name)}
-                                </div>
-                                <div className={styles["model-picker-persona"]}>
-                                  {getModelPersona(m.name)}
-                                </div>
-                              </div>
-                            );
-                          })}
+                        )}
+                      </div>
+                    )}
+                    {showInlineThinkingDuringLoading && (
+                      <div className={styles["chat-thinking-inline"]}>
+                        <div className={styles["chat-thinking-inline-content"]}>
+                          <Markdown content={thinkingPreview} />
                         </div>
                       </div>
-                    ) : isCompressedSummary ? (
-                      <div className={styles["chat-compressed-summary"]}>
-                        <div className={styles["chat-compressed-note"]}>
-                          {Locale.Memory.CompressedNotice}
-                        </div>
-                        <div
-                          className="markdown-body"
-                          style={{ fontSize: `${fontSize}px` }}
-                        >
-                          <Markdown content={message.content ?? ""} />
-                        </div>
-                        <button
-                          type="button"
-                          className={styles["chat-compressed-toggle"]}
-                          onClick={() => setShowCompressedInChat((v) => !v)}
-                        >
-                          {showCompressedInChat
-                            ? Locale.Memory.CollapseCompressed
-                            : Locale.Memory.ExpandCompressed}
-                        </button>
-                        {showCompressedInChat && (
-                          <div className={styles["chat-compressed-history"]}>
-                            {(message.compressedMessages ?? []).length === 0 ? (
-                              <div className={styles["chat-compressed-empty"]}>
-                                {Locale.Memory.EmptyCompressedHistory}
+                    )}
+                    <div
+                      className={styles["chat-message-item"]}
+                      data-reorder-id={reorderId}
+                    >
+                      {!isUser &&
+                        !isModelPicker &&
+                        !isCompressedSummary &&
+                        !(
+                          (message.preview ?? "") ||
+                          (message.content?.length ?? 0) === 0
+                        ) && (
+                          <div className={styles["chat-message-top-actions"]}>
+                            {message.streaming ? (
+                              <div
+                                className={styles["chat-message-top-action"]}
+                                onClick={() => onUserStop(message.id ?? i)}
+                              >
+                                {Locale.Chat.Actions.Stop}
                               </div>
                             ) : (
-                              (message.compressedMessages ?? []).map(
-                                (m, idx) => (
-                                  <div
-                                    key={`${m.id ?? idx}-${m.date}`}
-                                    className={
-                                      styles["chat-compressed-history-item"]
-                                    }
-                                  >
-                                    <div
-                                      className={styles["chat-compressed-role"]}
-                                    >
-                                      {m.role === "user"
-                                        ? Locale.Export.MessageFromYou
-                                        : Locale.Export.MessageFromChatGPT}
-                                    </div>
-                                    <div
-                                      className={
-                                        styles["chat-compressed-content"]
-                                      }
-                                    >
-                                      <Markdown content={m.content ?? ""} />
-                                    </div>
-                                  </div>
-                                ),
-                              )
+                              <div
+                                className={styles["chat-message-top-action"]}
+                                onClick={() =>
+                                  onResend(message.sourceIndex ?? i)
+                                }
+                              >
+                                {Locale.Chat.Actions.Retry}
+                              </div>
                             )}
+
+                            <div
+                              className={styles["chat-message-top-action"]}
+                              onClick={() =>
+                                copyToClipboard(message.content ?? "")
+                              }
+                            >
+                              {Locale.Chat.Actions.Copy}
+                            </div>
                           </div>
                         )}
-                      </div>
-                    ) : (
-                      <>
-                        {isUser && !!message.imageUrls?.length && (
-                          <div className={styles["chat-image-list"]}>
-                            {message.imageUrls.map((url, idx) => (
-                              <img
-                                src={url}
-                                key={message.id + "-img-" + idx}
-                                className={styles["chat-image-thumb"]}
-                                alt="user-upload"
-                              />
-                            ))}
+                      {showLoadingOnly ? (
+                        <LoadingIcon />
+                      ) : isModelPicker ? (
+                        <div className={styles["model-picker"]}>
+                          <div className={styles["model-picker-title"]}>
+                            {Locale.Store.ModelPicker.Title}
                           </div>
-                        )}
-                        {hasAssistantText && (
+                          <div className={styles["model-picker-subtitle"]}>
+                            {Locale.Store.ModelPicker.SubTitle}
+                          </div>
+                          <div className={styles["model-picker-list"]}>
+                            {ALL_MODELS.filter((m) => m.available).map((m) => {
+                              const selected =
+                                config.modelConfig.model === m.name;
+                              return (
+                                <div
+                                  key={m.name}
+                                  className={
+                                    styles["model-picker-item"] +
+                                    " " +
+                                    (selected
+                                      ? styles["model-picker-item-selected"]
+                                      : "")
+                                  }
+                                  onClick={() =>
+                                    onSelectModelForNewChat(m.name)
+                                  }
+                                >
+                                  <div className={styles["model-picker-name"]}>
+                                    {getCompactModelName(m.name)}
+                                  </div>
+                                  <div
+                                    className={styles["model-picker-persona"]}
+                                  >
+                                    {getModelPersona(m.name)}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : isCompressedSummary ? (
+                        <div className={styles["chat-compressed-summary"]}>
+                          <div className={styles["chat-compressed-note"]}>
+                            {Locale.Memory.CompressedNotice}
+                          </div>
                           <div
                             className="markdown-body"
                             style={{ fontSize: `${fontSize}px` }}
-                            onContextMenu={(e) => onRightClick(e, message)}
-                            onDoubleClickCapture={() => {
-                              if (!isMobile) return;
-                              setUserInput(message.content ?? "");
-                            }}
                           >
                             <Markdown content={message.content ?? ""} />
                           </div>
-                        )}
-                        {!isUser && hasReasoning && (
-                          <div className={styles["chat-message-reasoning"]}>
-                            <div
-                              className={
-                                styles["chat-message-reasoning-toggle"]
-                              }
-                              onClick={() => onToggleReasoning(message)}
-                            >
-                              {reasoningVisible
-                                ? Locale.Chat.Actions.HideReasoning
-                                : Locale.Chat.Actions.ShowReasoning}
+                          <button
+                            type="button"
+                            className={styles["chat-compressed-toggle"]}
+                            onClick={() => setShowCompressedInChat((v) => !v)}
+                          >
+                            {showCompressedInChat
+                              ? Locale.Memory.CollapseCompressed
+                              : Locale.Memory.ExpandCompressed}
+                          </button>
+                          {showCompressedInChat && (
+                            <div className={styles["chat-compressed-history"]}>
+                              {(message.compressedMessages ?? []).length ===
+                              0 ? (
+                                <div
+                                  className={styles["chat-compressed-empty"]}
+                                >
+                                  {Locale.Memory.EmptyCompressedHistory}
+                                </div>
+                              ) : (
+                                (message.compressedMessages ?? []).map(
+                                  (m, idx) => (
+                                    <div
+                                      key={`${m.id ?? idx}-${m.date}`}
+                                      className={
+                                        styles["chat-compressed-history-item"]
+                                      }
+                                    >
+                                      <div
+                                        className={
+                                          styles["chat-compressed-role"]
+                                        }
+                                      >
+                                        {m.role === "user"
+                                          ? Locale.Export.MessageFromYou
+                                          : Locale.Export.MessageFromChatGPT}
+                                      </div>
+                                      <div
+                                        className={
+                                          styles["chat-compressed-content"]
+                                        }
+                                      >
+                                        <Markdown content={m.content ?? ""} />
+                                      </div>
+                                    </div>
+                                  ),
+                                )
+                              )}
                             </div>
-                            {reasoningVisible && (
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          {isUser && !!message.imageUrls?.length && (
+                            <div className={styles["chat-image-list"]}>
+                              {message.imageUrls.map((url, idx) => (
+                                <img
+                                  src={url}
+                                  key={message.id + "-img-" + idx}
+                                  className={styles["chat-image-thumb"]}
+                                  alt="user-upload"
+                                />
+                              ))}
+                            </div>
+                          )}
+                          {hasAssistantText && (
+                            <div
+                              className="markdown-body"
+                              style={{ fontSize: `${fontSize}px` }}
+                              onContextMenu={(e) => onRightClick(e, message)}
+                              onDoubleClickCapture={() => {
+                                if (!isMobile) return;
+                                setUserInput(message.content ?? "");
+                              }}
+                            >
+                              <Markdown content={message.content ?? ""} />
+                            </div>
+                          )}
+                          {!isUser && hasReasoning && (
+                            <div className={styles["chat-message-reasoning"]}>
                               <div
                                 className={
-                                  styles["chat-message-reasoning-content"]
+                                  styles["chat-message-reasoning-toggle"]
                                 }
+                                onClick={() => onToggleReasoning(message)}
                               >
-                                <Markdown content={message.reasoning ?? ""} />
+                                {reasoningVisible
+                                  ? Locale.Chat.Actions.HideReasoning
+                                  : Locale.Chat.Actions.ShowReasoning}
                               </div>
-                            )}
+                              {reasoningVisible && (
+                                <div
+                                  className={
+                                    styles["chat-message-reasoning-content"]
+                                  }
+                                >
+                                  <Markdown content={message.reasoning ?? ""} />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    {!isUser &&
+                      !message.preview &&
+                      !isCompressedSummary &&
+                      !isModelPicker &&
+                      !showInlineThinkingDuringLoading && (
+                        <div className={styles["chat-message-actions"]}>
+                          <div className={styles["chat-message-action-date"]}>
+                            {renderModelName(message.model)}
+                            {formatRelativeDateTime(message.date)}
                           </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  {!isUser &&
-                    !message.preview &&
-                    !isCompressedSummary &&
-                    !isModelPicker &&
-                    !showInlineThinkingDuringLoading && (
-                      <div className={styles["chat-message-actions"]}>
-                        <div className={styles["chat-message-action-date"]}>
-                          {renderModelName(message.model)}
-                          {formatRelativeDateTime(message.date)}
                         </div>
-                      </div>
-                    )}
+                      )}
+                  </div>
                 </div>
-              </div>
-            );
+              );
             })}
           </AnimatedReorderGroup>
         </div>
