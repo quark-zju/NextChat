@@ -735,7 +735,7 @@ export function Chat(props: {
       image.src = dataUrl;
     });
 
-    const maxEdge = 800;
+    const maxEdge = 1024;
     const scale = Math.min(1, maxEdge / Math.max(img.width, img.height)) || 1;
     const width = Math.max(1, Math.round(img.width * scale));
     const height = Math.max(1, Math.round(img.height * scale));
