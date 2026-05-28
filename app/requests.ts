@@ -28,37 +28,37 @@ const makeRequestParam = (
   let sendMessages = messages
     .filter((m) => m.role !== "function")
     .map((v) => {
-    if (v.role !== "user" || !v.imageUrls || v.imageUrls.length === 0) {
+      if (v.role !== "user" || !v.imageUrls || v.imageUrls.length === 0) {
+        return {
+          role: v.role as "system" | "user" | "assistant",
+          content: v.content ?? "",
+        };
+      }
+
+      const parts: Array<
+        | { type: "text"; text: string }
+        | { type: "image_url"; image_url: { url: string } }
+      > = [];
+
+      const text = (v.content ?? "").trim();
+      if (text.length > 0) {
+        parts.push({ type: "text", text });
+      }
+
+      for (const url of v.imageUrls) {
+        parts.push({
+          type: "image_url",
+          image_url: {
+            url,
+          },
+        });
+      }
+
       return {
         role: v.role as "system" | "user" | "assistant",
-        content: v.content ?? "",
+        content: parts,
       };
-    }
-
-    const parts: Array<
-      | { type: "text"; text: string }
-      | { type: "image_url"; image_url: { url: string } }
-    > = [];
-
-    const text = (v.content ?? "").trim();
-    if (text.length > 0) {
-      parts.push({ type: "text", text });
-    }
-
-    for (const url of v.imageUrls) {
-      parts.push({
-        type: "image_url",
-        image_url: {
-          url,
-        },
-      });
-    }
-
-    return {
-      role: v.role as "system" | "user" | "assistant",
-      content: parts,
-    };
-  });
+    });
 
   if (options?.filterBot) {
     sendMessages = sendMessages.filter((m) => m.role !== "assistant");
@@ -106,7 +106,7 @@ export function requestOpenaiClient(path: string) {
         "Cache-Control": "no-cache",
         path,
         ...(typeof body?.model === "string"
-          ? { "x-chat-model": body.model }
+          ? { "chat-model": body.model, "x-chat-model": body.model }
           : {}),
         ...getHeaders(),
       },
@@ -215,9 +215,10 @@ export async function requestChatStream(
       headers: {
         "Content-Type": "application/json",
         path: "v1/chat/completions",
+        "chat-lang": getChatLanguageHeader(),
         "x-chat-lang": getChatLanguageHeader(),
         ...(typeof req?.model === "string"
-          ? { "x-chat-model": req.model }
+          ? { "chat-model": req.model, "x-chat-model": req.model }
           : {}),
         ...getHeaders(),
       },

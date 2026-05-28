@@ -22,7 +22,9 @@ function shouldUseOpenAI(path: string, model?: string) {
   const normalized = model.startsWith("openai/")
     ? model.slice("openai/".length)
     : model;
-  return OPENAI_DIRECT_MODELS.has(model) || OPENAI_DIRECT_MODELS.has(normalized);
+  return (
+    OPENAI_DIRECT_MODELS.has(model) || OPENAI_DIRECT_MODELS.has(normalized)
+  );
 }
 
 export function getProviderConfig(path: string, model?: string) {
@@ -65,7 +67,10 @@ export async function requestOpenai(req: NextRequest) {
   // }
 
   const requestPath = req.headers.get("path") ?? "";
-  const requestModel = req.headers.get("x-chat-model") ?? undefined;
+  const requestModel =
+    req.headers.get("chat-model") ??
+    req.headers.get("x-chat-model") ??
+    undefined;
   const config = getProviderConfig(requestPath, requestModel);
 
   if (!requestPath) {

@@ -52,7 +52,8 @@ function parseAcceptLanguage(raw?: string | null) {
 }
 
 function resolveTargetLanguage(req: NextRequest) {
-  const explicit = req.headers.get("x-chat-lang");
+  const explicit =
+    req.headers.get("chat-lang") ?? req.headers.get("x-chat-lang");
   if (explicit && explicit.trim().length > 0) {
     return normalizeTargetLanguage(explicit);
   }
@@ -106,7 +107,9 @@ function takeReasoningSegment(buffer: string) {
   if (paragraphMatch && typeof paragraphMatch.index === "number") {
     const splitIndex = paragraphMatch.index;
     const first = normalized.slice(0, splitIndex).trim();
-    const restAfterFirst = normalized.slice(splitIndex + paragraphMatch[0].length);
+    const restAfterFirst = normalized.slice(
+      splitIndex + paragraphMatch[0].length,
+    );
 
     if (first.length > 0 && shouldHoldReasoningParagraph(first)) {
       const secondMatch = restAfterFirst.match(/\n{2,}/);
@@ -633,18 +636,16 @@ async function createStream(req: NextRequest) {
         try {
           const hasDone = replayEvents.some((event) => event.type === "done");
           if (!hasDone) {
-            replayEvents.push({ type: "done", atMs: Date.now() - streamStartedAt });
+            replayEvents.push({
+              type: "done",
+              atMs: Date.now() - streamStartedAt,
+            });
           }
-          await persistReplayPayload(
-            req,
-            replayKey,
-            replayRequest.request,
-            {
+          await persistReplayPayload(req, replayKey, replayRequest.request, {
             content: replayContent,
             reasoning: replayReasoning,
             events: replayEvents,
-            },
-          );
+          });
           console.log("[Replay] recorded", replayKey, replayEvents.length);
         } catch (error) {
           console.error("[Replay] record failed", error);
